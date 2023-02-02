@@ -14,7 +14,7 @@ type Pool struct {
 	initGuard               sync.Once
 	task                    chan func()
 	manageTask              chan struct{}
-	quitChan                chan struct{}
+	quitChan                atomic.Pointer[chan struct{}]
 }
 
 func (p *Pool) SetMaxConcurrencyCount(count int) {
@@ -54,11 +54,12 @@ func (p *Pool) Wait() {
 
 func (p *Pool) Cleanup() {
 	p.init()
-	p.quitChan = make(chan struct{})
+	qc := make(chan struct{})
+	p.quitChan.Store(&qc)
 	close(p.task)
 	p.setMaxConcurrencyCount(needCleanupConcurrencyCount)
 
-	<-p.quitChan
+	<-qc
 	p.waitG.Wait()
 }
 
@@ -78,19 +79,20 @@ func (p *Pool) manageRoutine() {
 			break
 		}
 
+	Exit:
 		for {
 			select {
 			case <-p.manageTask:
-				break
+				break Exit
 			case f, ok := <-p.task:
 				if !ok {
-					break
+					break Exit
 				}
 				p.dispatchWork(f)
 			}
 		}
 	}
-	close(p.quitChan)
+	close(*p.quitChan.Load())
 }
 
 func (p *Pool) parkHere() bool {
