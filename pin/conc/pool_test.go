@@ -32,11 +32,14 @@ func runTask(taskCount int, sendTaskConcurrency int, sleepInterval time.Duration
 func TestPool(t *testing.T) {
 	var pool Pool
 	defer pool.Cleanup()
-	assert.Equal(t, 0, pool.GetMaxConcurrencyCount())
-	assert.Equal(t, 0, pool.GetCurrentConcurrencyCount())
+	verify := func(maxConcurrencyCount, currentCurrencyCount int) {
+		assert.Equal(t, maxConcurrencyCount, pool.GetMaxConcurrencyCount())
+		assert.Equal(t, currentCurrencyCount, pool.GetCurrentConcurrencyCount())
+	}
+	verify(0, 0)
 	pool.SetMaxConcurrencyCount(1)
-	assert.Equal(t, 1, pool.GetMaxConcurrencyCount())
+	verify(1, 0)
 	wg := runTask(1000, 1, 0, &pool)
 	wg.Wait()
-	assert.Equal(t, 0, pool.GetCurrentConcurrencyCount())
+	verify(1, 0)
 }
