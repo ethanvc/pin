@@ -5,6 +5,8 @@ import (
 	"sync/atomic"
 )
 
+const needCleanupConcurrencyCount = -1
+
 type Pool struct {
 	maxConcurrencyCount     int32
 	currentConcurrencyCount int32
@@ -12,9 +14,17 @@ type Pool struct {
 	initGuard               sync.Once
 	task                    chan func()
 	manageTask              chan struct{}
+	quitChan                chan struct{}
 }
 
 func (p *Pool) SetMaxConcurrencyCount(count int) {
+	if count < 0 {
+		return
+	}
+	p.setMaxConcurrencyCount(count)
+}
+
+func (p *Pool) setMaxConcurrencyCount(count int) {
 	p.init()
 	atomic.StoreInt32(&p.maxConcurrencyCount, int32(count))
 	select {
@@ -38,55 +48,64 @@ func (p *Pool) Go(f func()) {
 	p.task <- f
 }
 
+func (p *Pool) Wait() {
+	p.waitG.Wait()
+}
+
 func (p *Pool) Cleanup() {
 	p.init()
-	close(p.manageTask)
+	p.quitChan = make(chan struct{})
+	close(p.task)
+	p.setMaxConcurrencyCount(needCleanupConcurrencyCount)
+
+	<-p.quitChan
 	p.waitG.Wait()
 }
 
 func (p *Pool) init() {
 	p.initGuard.Do(func() {
 		p.task = make(chan func())
-		p.manageTask = make(chan struct{})
+		p.manageTask = make(chan struct{}, 1)
 		// pump mange routine working
 		p.manageTask <- struct{}{}
 		go p.manageRoutine()
 	})
 }
 
-func (p *Pool) needClose() bool {
-	select {
-	case _, ok := <-p.manageTask:
-		return !ok
-	default:
-	}
-	return false
-}
-
 func (p *Pool) manageRoutine() {
 	for {
-		if p.needClose() {
+		if p.parkHere() {
 			break
 		}
-		p.parkHere()
 
-		select {
-		case <-p.manageTask:
-			continue
-		case f := <-p.task:
-			p.dispatchWork(f)
+		for {
+			select {
+			case <-p.manageTask:
+				break
+			case f, ok := <-p.task:
+				if !ok {
+					break
+				}
+				p.dispatchWork(f)
+			}
 		}
 	}
+	close(p.quitChan)
 }
 
-func (p *Pool) parkHere() {
+func (p *Pool) parkHere() bool {
 	for {
-		if atomic.LoadInt32(&p.maxConcurrencyCount) == 0 {
+		cnt := atomic.LoadInt32(&p.maxConcurrencyCount)
+		if cnt == needCleanupConcurrencyCount {
+			return true
+		}
+		if cnt == 0 {
 			<-p.manageTask
 			continue
 		}
 		break
 	}
+	return false
 }
 
 func (p *Pool) dispatchWork(f func()) {
@@ -95,7 +114,8 @@ func (p *Pool) dispatchWork(f func()) {
 	if atomic.LoadInt32(&p.currentConcurrencyCount)+1 < atomic.LoadInt32(&p.maxConcurrencyCount) {
 		go p.workRoutine(f)
 	} else {
-		p.workRoutine(f)
+		defer p.subConcurrency()
+		f()
 	}
 }
 
@@ -103,11 +123,14 @@ func (p *Pool) workRoutine(f func()) {
 	defer p.subConcurrency()
 	f()
 	for {
-		if p.workerNeedExit() {
+		if p.WorkerNeedExit() {
 			break
 		}
 		select {
-		case f = <-p.task:
+		case f, ok := <-p.task:
+			if !ok {
+				break
+			}
 			f()
 		default:
 			break
@@ -115,7 +138,7 @@ func (p *Pool) workRoutine(f func()) {
 	}
 }
 
-func (p *Pool) workerNeedExit() bool {
+func (p *Pool) WorkerNeedExit() bool {
 	return atomic.LoadInt32(&p.currentConcurrencyCount) > atomic.LoadInt32(&p.maxConcurrencyCount)
 }
 
