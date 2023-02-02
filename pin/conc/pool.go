@@ -11,8 +11,8 @@ type Pool struct {
 	maxConcurrencyCount int32
 	wg                  WaitGroup
 	initOnce            sync.Once
-	task                chan func()
-	manageTask          chan struct{}
+	taskChan            chan func()
+	manageChan          chan struct{}
 	quitChan            atomic.Pointer[chan struct{}]
 }
 
@@ -27,7 +27,7 @@ func (p *Pool) setMaxConcurrencyCount(count int) {
 	p.init()
 	atomic.StoreInt32(&p.maxConcurrencyCount, int32(count))
 	select {
-	case p.manageTask <- struct{}{}:
+	case p.manageChan <- struct{}{}:
 	default:
 	}
 }
@@ -43,7 +43,7 @@ func (p *Pool) GetCurrentConcurrencyCount() int {
 
 func (p *Pool) Go(f func()) {
 	p.init()
-	p.task <- f
+	p.taskChan <- f
 }
 
 func (p *Pool) Wait() {
@@ -54,7 +54,7 @@ func (p *Pool) Cleanup() {
 	p.init()
 	qc := make(chan struct{})
 	p.quitChan.Store(&qc)
-	close(p.task)
+	close(p.taskChan)
 	p.setMaxConcurrencyCount(needCleanupConcurrencyCount)
 
 	<-qc
@@ -63,10 +63,10 @@ func (p *Pool) Cleanup() {
 
 func (p *Pool) init() {
 	p.initOnce.Do(func() {
-		p.task = make(chan func())
-		p.manageTask = make(chan struct{}, 1)
+		p.taskChan = make(chan func())
+		p.manageChan = make(chan struct{}, 1)
 		// pump mange routine working
-		p.manageTask <- struct{}{}
+		p.manageChan <- struct{}{}
 		go p.manageRoutine()
 	})
 }
@@ -80,9 +80,9 @@ func (p *Pool) manageRoutine() {
 	Exit:
 		for {
 			select {
-			case <-p.manageTask:
+			case <-p.manageChan:
 				break Exit
-			case f, ok := <-p.task:
+			case f, ok := <-p.taskChan:
 				if !ok {
 					break Exit
 				}
@@ -100,7 +100,7 @@ func (p *Pool) parkHere() bool {
 			return true
 		}
 		if cnt == 0 {
-			<-p.manageTask
+			<-p.manageChan
 			continue
 		}
 		break
@@ -127,7 +127,7 @@ func (p *Pool) workRoutine(f func()) {
 			break
 		}
 		select {
-		case f, ok := <-p.task:
+		case f, ok := <-p.taskChan:
 			if !ok {
 				break
 			}
