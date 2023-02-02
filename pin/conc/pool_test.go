@@ -85,6 +85,7 @@ func testCleanupWhenRun(t *testing.T) {
 func TestConcurrencyReduce(t *testing.T) {
 	p, r := Prepare(t)
 	r.TaskCount = math.MaxInt64
+	r.Interval = time.Millisecond
 	r.Start()
 	time.Sleep(time.Millisecond)
 	p.SetMaxConcurrencyCount(50)
@@ -95,7 +96,7 @@ func TestConcurrencyReduce(t *testing.T) {
 		time.Sleep(0)
 	}
 	p.SetMaxConcurrencyCount(10)
-	for i := 0; i < 10; i++ {
+	for {
 		if p.GetCurrentConcurrencyCount() == 10 {
 			break
 		}
@@ -108,6 +109,7 @@ func TestConcurrencyReduce(t *testing.T) {
 		}
 		time.Sleep(0)
 	}
+	p.SetMaxConcurrencyCount(100)
 	r.TaskCount = 0
 	r.WaitGroup.Wait()
 	p.Cleanup()
