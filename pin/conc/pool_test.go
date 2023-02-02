@@ -1,8 +1,8 @@
 package conc
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
+	"math"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -41,7 +41,7 @@ func (r *RunTask) worker() {
 		}
 		r.Pool.Go(func() {
 			time.Sleep(r.Interval)
-			fmt.Println(token)
+			// fmt.Println(token)
 		})
 	}
 }
@@ -68,4 +68,72 @@ func TestPool(t *testing.T) {
 	p.Wait()
 	p.Cleanup()
 	r.Verify(needCleanupConcurrencyCount, 0)
+}
+
+// will crash.
+func testCleanupWhenRun(t *testing.T) {
+	p, r := Prepare(t)
+	r.TaskCount = math.MaxInt64
+	r.Start()
+	time.Sleep(time.Millisecond)
+	p.Cleanup()
+	r.TaskCount = 0
+	r.WaitGroup.Wait()
+	r.Verify(needCleanupConcurrencyCount, 0)
+}
+
+func TestConcurrencyReduce(t *testing.T) {
+	p, r := Prepare(t)
+	r.TaskCount = math.MaxInt64
+	r.Start()
+	time.Sleep(time.Millisecond)
+	p.SetMaxConcurrencyCount(50)
+	for {
+		if p.GetCurrentConcurrencyCount() == 50 {
+			break
+		}
+		time.Sleep(0)
+	}
+	p.SetMaxConcurrencyCount(10)
+	for i := 0; i < 10; i++ {
+		if p.GetCurrentConcurrencyCount() == 10 {
+			break
+		}
+		time.Sleep(0)
+	}
+	p.SetMaxConcurrencyCount(0)
+	for {
+		if p.GetCurrentConcurrencyCount() == 0 {
+			break
+		}
+		time.Sleep(0)
+	}
+	r.TaskCount = 0
+	r.WaitGroup.Wait()
+	p.Cleanup()
+}
+
+func TestConcurrencyIncrease(t *testing.T) {
+	p, r := Prepare(t)
+	r.Interval = time.Millisecond
+	r.TaskCount = math.MaxInt64
+	r.Start()
+	time.Sleep(time.Millisecond)
+	p.SetMaxConcurrencyCount(50)
+	for {
+		if p.GetCurrentConcurrencyCount() == 50 {
+			break
+		}
+		time.Sleep(0)
+	}
+	p.SetMaxConcurrencyCount(60)
+	for {
+		if p.GetCurrentConcurrencyCount() == 60 {
+			break
+		}
+		time.Sleep(0)
+	}
+	r.TaskCount = 0
+	r.WaitGroup.Wait()
+	p.Cleanup()
 }

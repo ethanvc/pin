@@ -106,18 +106,17 @@ func (p *Pool) parkHere() bool {
 }
 
 func (p *Pool) dispatchWork(f func()) {
-	p.wg.Add(1)
 	// plus one because manage routine can execute work too.
 	if p.wg.CurrentConcurrency()+1 < p.GetMaxConcurrencyCount() {
-		go p.workRoutine(f)
+		p.wg.Go(func() { p.workRoutine(f) })
 	} else {
-		defer p.wg.Done()
+		p.wg.Add(1)
 		f()
+		p.wg.Done()
 	}
 }
 
 func (p *Pool) workRoutine(f func()) {
-	defer p.wg.Done()
 	f()
 Exit:
 	for {
