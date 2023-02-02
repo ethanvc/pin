@@ -9,7 +9,7 @@ const needCleanupConcurrencyCount = -1
 
 type Pool struct {
 	maxConcurrencyCount int32
-	waitG               WaitGroup
+	wg                  WaitGroup
 	initGuard           sync.Once
 	task                chan func()
 	manageTask          chan struct{}
@@ -38,7 +38,7 @@ func (p *Pool) GetMaxConcurrencyCount() int {
 }
 
 func (p *Pool) GetCurrentConcurrencyCount() int {
-	return p.waitG.CurrentConcurrency()
+	return p.wg.CurrentConcurrency()
 }
 
 func (p *Pool) Go(f func()) {
@@ -47,7 +47,7 @@ func (p *Pool) Go(f func()) {
 }
 
 func (p *Pool) Wait() {
-	p.waitG.Wait()
+	p.wg.Wait()
 }
 
 func (p *Pool) Cleanup() {
@@ -58,7 +58,7 @@ func (p *Pool) Cleanup() {
 	p.setMaxConcurrencyCount(needCleanupConcurrencyCount)
 
 	<-qc
-	p.waitG.Wait()
+	p.wg.Wait()
 }
 
 func (p *Pool) init() {
@@ -109,18 +109,18 @@ func (p *Pool) parkHere() bool {
 }
 
 func (p *Pool) dispatchWork(f func()) {
-	p.waitG.Add(1)
+	p.wg.Add(1)
 	// plus one because manage routine can execute work too.
-	if p.waitG.CurrentConcurrency()+1 < p.GetMaxConcurrencyCount() {
+	if p.wg.CurrentConcurrency()+1 < p.GetMaxConcurrencyCount() {
 		go p.workRoutine(f)
 	} else {
-		defer p.waitG.Done()
+		defer p.wg.Done()
 		f()
 	}
 }
 
 func (p *Pool) workRoutine(f func()) {
-	defer p.waitG.Done()
+	defer p.wg.Done()
 	f()
 	for {
 		if p.WorkerNeedExit() {
