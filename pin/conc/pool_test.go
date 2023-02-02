@@ -1,45 +1,70 @@
 package conc
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 )
 
-func runTask(taskCount int, sendTaskConcurrency int, sleepInterval time.Duration, p *Pool) *sync.WaitGroup {
-	var wg sync.WaitGroup
-	wg.Add(taskCount)
-	taskCounter := int32(0)
-	for i := 0; i < sendTaskConcurrency; i++ {
-		go func() {
-			for {
-				currentCounter := atomic.AddInt32(&taskCounter, 1)
-				if int(currentCounter) > taskCount {
-					break
-				}
-				p.Go(func() {
-					time.Sleep(sleepInterval)
-					wg.Done()
-				})
-			}
-		}()
+type RunTask struct {
+	TaskCount           int64
+	SendTaskConcurrency int
+	Pool                *Pool
+	Interval            time.Duration
+	WaitGroup           WaitGroup
+	T                   *testing.T
+}
+
+func (r *RunTask) Verify(maxConcurrencyCount, currentCurrencyCount int) {
+	assert.Equal(r.T, maxConcurrencyCount, r.Pool.GetMaxConcurrencyCount())
+	assert.Equal(r.T, currentCurrencyCount, r.Pool.GetCurrentConcurrencyCount())
+	time.Sleep(1 * time.Millisecond)
+	assert.Equal(r.T, maxConcurrencyCount, r.Pool.GetMaxConcurrencyCount())
+	assert.Equal(r.T, currentCurrencyCount, r.Pool.GetCurrentConcurrencyCount())
+}
+
+func (r *RunTask) Start() {
+	for i := 0; i < r.SendTaskConcurrency; i++ {
+		r.WaitGroup.Go(func() {
+			r.worker()
+		})
 	}
-	return &wg
+}
+
+func (r *RunTask) worker() {
+	for {
+		token := atomic.AddInt64(&r.TaskCount, -1)
+		if token < 0 {
+			break
+		}
+		r.Pool.Go(func() {
+			time.Sleep(r.Interval)
+			fmt.Println(token)
+		})
+	}
+}
+
+func Prepare(t *testing.T) (*Pool, *RunTask) {
+	var pool Pool
+	runner := RunTask{
+		TaskCount:           1000,
+		SendTaskConcurrency: 10,
+		Pool:                &pool,
+		Interval:            0,
+		T:                   t,
+	}
+	return &pool, &runner
 }
 
 func TestPool(t *testing.T) {
-	var pool Pool
-	defer pool.Cleanup()
-	verify := func(maxConcurrencyCount, currentCurrencyCount int) {
-		assert.Equal(t, maxConcurrencyCount, pool.GetMaxConcurrencyCount())
-		assert.Equal(t, currentCurrencyCount, pool.GetCurrentConcurrencyCount())
-	}
-	verify(0, 0)
-	pool.SetMaxConcurrencyCount(1)
-	verify(1, 0)
-	wg := runTask(1000, 1, 0, &pool)
-	wg.Wait()
-	verify(1, 0)
+	p, r := Prepare(t)
+	r.Start()
+	r.Verify(0, 0)
+	assert.Equal(t, int64(990), r.TaskCount)
+	p.SetMaxConcurrencyCount(3)
+	r.WaitGroup.Wait()
+	p.Wait()
+	r.Verify(3, 0)
 }
