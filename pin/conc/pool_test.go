@@ -66,5 +66,6 @@ func TestPool(t *testing.T) {
 	p.SetMaxConcurrencyCount(3)
 	r.WaitGroup.Wait()
 	p.Wait()
-	r.Verify(3, 0)
+	p.Cleanup()
+	r.Verify(needCleanupConcurrencyCount, 0)
 }

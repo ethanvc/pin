@@ -122,6 +122,7 @@ func (p *Pool) dispatchWork(f func()) {
 func (p *Pool) workRoutine(f func()) {
 	defer p.wg.Done()
 	f()
+Exit:
 	for {
 		if p.WorkerNeedExit() {
 			break
@@ -129,11 +130,11 @@ func (p *Pool) workRoutine(f func()) {
 		select {
 		case f, ok := <-p.taskChan:
 			if !ok {
-				break
+				break Exit
 			}
 			f()
 		default:
-			break
+			break Exit
 		}
 	}
 }
