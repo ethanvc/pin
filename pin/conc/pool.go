@@ -8,13 +8,12 @@ import (
 const needCleanupConcurrencyCount = -1
 
 type Pool struct {
-	maxConcurrencyCount     int32
-	currentConcurrencyCount int32
-	waitG                   sync.WaitGroup
-	initGuard               sync.Once
-	task                    chan func()
-	manageTask              chan struct{}
-	quitChan                atomic.Pointer[chan struct{}]
+	maxConcurrencyCount int32
+	waitG               WaitGroup
+	initGuard           sync.Once
+	task                chan func()
+	manageTask          chan struct{}
+	quitChan            atomic.Pointer[chan struct{}]
 }
 
 func (p *Pool) SetMaxConcurrencyCount(count int) {
@@ -39,8 +38,7 @@ func (p *Pool) GetMaxConcurrencyCount() int {
 }
 
 func (p *Pool) GetCurrentConcurrencyCount() int {
-	v := atomic.LoadInt32(&p.currentConcurrencyCount)
-	return int(v)
+	return p.waitG.CurrentConcurrency()
 }
 
 func (p *Pool) Go(f func()) {
@@ -111,18 +109,18 @@ func (p *Pool) parkHere() bool {
 }
 
 func (p *Pool) dispatchWork(f func()) {
-	p.addConcurrency()
+	p.waitG.Add(1)
 	// plus one because manage routine can execute work too.
-	if atomic.LoadInt32(&p.currentConcurrencyCount)+1 < atomic.LoadInt32(&p.maxConcurrencyCount) {
+	if p.waitG.CurrentConcurrency()+1 < p.GetMaxConcurrencyCount() {
 		go p.workRoutine(f)
 	} else {
-		defer p.subConcurrency()
+		defer p.waitG.Done()
 		f()
 	}
 }
 
 func (p *Pool) workRoutine(f func()) {
-	defer p.subConcurrency()
+	defer p.waitG.Done()
 	f()
 	for {
 		if p.WorkerNeedExit() {
@@ -141,15 +139,5 @@ func (p *Pool) workRoutine(f func()) {
 }
 
 func (p *Pool) WorkerNeedExit() bool {
-	return atomic.LoadInt32(&p.currentConcurrencyCount) > atomic.LoadInt32(&p.maxConcurrencyCount)
-}
-
-func (p *Pool) addConcurrency() {
-	p.waitG.Add(1)
-	atomic.AddInt32(&p.currentConcurrencyCount, 1)
-}
-
-func (p *Pool) subConcurrency() {
-	atomic.AddInt32(&p.currentConcurrencyCount, -1)
-	p.waitG.Done()
+	return p.GetCurrentConcurrencyCount() >= p.GetMaxConcurrencyCount()
 }

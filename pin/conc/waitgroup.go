@@ -11,13 +11,22 @@ type WaitGroup struct {
 }
 
 func (wg *WaitGroup) Go(f func()) {
-	wg.wg.Add(1)
-	atomic.AddInt32(&wg.currentConcurrency, 1)
+	wg.Add(1)
 	go wg.worker(f)
 }
 
 func (wg *WaitGroup) Wait() {
 	wg.wg.Wait()
+}
+
+func (wg *WaitGroup) Add(delta int) {
+	wg.wg.Add(delta)
+	atomic.AddInt32(&wg.currentConcurrency, int32(delta))
+}
+
+func (wg *WaitGroup) Done() {
+	atomic.AddInt32(&wg.currentConcurrency, -1)
+	wg.wg.Done()
 }
 
 // CurrentConcurrency is useful to inspect runtime concurrency.
@@ -27,9 +36,6 @@ func (wg *WaitGroup) CurrentConcurrency() int {
 }
 
 func (wg *WaitGroup) worker(f func()) {
-	defer func() {
-		atomic.AddInt32(&wg.currentConcurrency, -1)
-		wg.wg.Done()
-	}()
+	defer wg.Done()
 	f()
 }
