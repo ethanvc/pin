@@ -10,7 +10,7 @@ const needCleanupConcurrencyCount = -1
 type Pool struct {
 	maxConcurrencyCount int32
 	wg                  WaitGroup
-	initGuard           sync.Once
+	initOnce            sync.Once
 	task                chan func()
 	manageTask          chan struct{}
 	quitChan            atomic.Pointer[chan struct{}]
@@ -62,7 +62,7 @@ func (p *Pool) Cleanup() {
 }
 
 func (p *Pool) init() {
-	p.initGuard.Do(func() {
+	p.initOnce.Do(func() {
 		p.task = make(chan func())
 		p.manageTask = make(chan struct{}, 1)
 		// pump mange routine working
