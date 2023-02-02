@@ -2,6 +2,7 @@ package conc
 
 import (
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/goleak"
 	"math"
 	"sync/atomic"
 	"testing"
@@ -59,6 +60,7 @@ func Prepare(t *testing.T) (*Pool, *RunTask) {
 }
 
 func TestPool(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, r := Prepare(t)
 	r.Start()
 	r.Verify(0, 0)
@@ -72,6 +74,7 @@ func TestPool(t *testing.T) {
 
 // will crash.
 func testCleanupWhenRun(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, r := Prepare(t)
 	r.TaskCount = math.MaxInt64
 	r.Start()
@@ -83,6 +86,7 @@ func testCleanupWhenRun(t *testing.T) {
 }
 
 func TestConcurrencyReduce(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, r := Prepare(t)
 	r.TaskCount = math.MaxInt64
 	r.Interval = time.Millisecond
@@ -116,6 +120,7 @@ func TestConcurrencyReduce(t *testing.T) {
 }
 
 func TestConcurrencyIncrease(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	p, r := Prepare(t)
 	r.Interval = time.Millisecond
 	r.TaskCount = math.MaxInt64
