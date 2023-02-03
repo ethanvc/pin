@@ -1,4 +1,4 @@
-package structvisitor
+package typewalker
 
 import (
 	"reflect"
@@ -6,7 +6,7 @@ import (
 )
 
 type structVisitorCache sync.Map
-type encodeFunc func(walker *StructWalker, v reflect.Value)
+type encodeFunc func(walker *TypeWalker, v reflect.Value)
 
 type cacheKey struct {
 	visitorType reflect.Type
@@ -33,13 +33,13 @@ func (cache *structVisitorCache) Store(visitorType reflect.Type, valType reflect
 	}, f)
 }
 
-type StructWalker struct {
-	visitor     StructVisitor
+type TypeWalker struct {
+	visitor     TypeVisitor
 	visitorType reflect.Type
 	depth       int
 }
 
-func (w *StructWalker) Visit(v any, visitor StructVisitor) {
+func (w *TypeWalker) Visit(v any, visitor TypeVisitor) {
 	if v == nil {
 		visitor.VisitNil()
 		return
@@ -51,7 +51,7 @@ func (w *StructWalker) Visit(v any, visitor StructVisitor) {
 	w.getEncoder(reflect.TypeOf(v))(w, reflect.ValueOf(v))
 }
 
-func (w *StructWalker) getEncoder(valType reflect.Type) encodeFunc {
+func (w *TypeWalker) getEncoder(valType reflect.Type) encodeFunc {
 	if f := sCache.Find(w.visitorType, valType); f != nil {
 		return f
 	}
