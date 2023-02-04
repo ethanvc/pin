@@ -4,6 +4,7 @@ import "reflect"
 
 type TypeVisitor interface {
 	VisitNil() bool
+	GetProcessor(valType reflect.Type, tag string) ProcessorFunc
 }
 
 type CustomVisitor interface {

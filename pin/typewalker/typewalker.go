@@ -6,30 +6,31 @@ import (
 )
 
 type processorCache sync.Map
-type processorFunc func(walker *TypeWalker, v reflect.Value)
+type ProcessorFunc func(walker *TypeWalker, v reflect.Value)
 
 type cacheKey struct {
-	visitorType reflect.Type
-	valType     reflect.Type
+	VisitorType reflect.Type
+	ValType     reflect.Type
+	Tag         string
 }
 
 var sCache processorCache
 
-func (cache *processorCache) Find(visitorType reflect.Type, valType reflect.Type) processorFunc {
+func (cache *processorCache) Find(visitorType reflect.Type, valType reflect.Type) ProcessorFunc {
 	f, ok := (*sync.Map)(cache).Load(cacheKey{
-		visitorType: visitorType,
-		valType:     valType,
+		VisitorType: visitorType,
+		ValType:     valType,
 	})
 	if !ok {
 		return nil
 	}
-	return f.(processorFunc)
+	return f.(ProcessorFunc)
 }
 
-func (cache *processorCache) Store(visitorType reflect.Type, valType reflect.Type, f processorFunc) {
+func (cache *processorCache) Store(visitorType reflect.Type, valType reflect.Type, f ProcessorFunc) {
 	(*sync.Map)(cache).Store(cacheKey{
-		visitorType: visitorType,
-		valType:     valType,
+		VisitorType: visitorType,
+		ValType:     valType,
 	}, f)
 }
 
@@ -51,7 +52,7 @@ func (w *TypeWalker) Visit(v any, visitor TypeVisitor) {
 	w.getProcessor(reflect.TypeOf(v))(w, reflect.ValueOf(v))
 }
 
-func (w *TypeWalker) getProcessor(valType reflect.Type) processorFunc {
+func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 	if f := sCache.Find(w.visitorType, valType); f != nil {
 		return f
 	}
@@ -60,9 +61,14 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) processorFunc {
 	return f
 }
 
-func (w *TypeWalker) getProcessorSlow(valType reflect.Type) processorFunc {
+func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	if implementCustomVisitor(valType) {
 
+	}
+
+	f := w.visitor.GetProcessor(valType, "")
+	if f != nil {
+		return f
 	}
 	return dummyProcessor
 }
