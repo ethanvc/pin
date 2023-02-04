@@ -5,17 +5,17 @@ import (
 	"sync"
 )
 
-type structVisitorCache sync.Map
-type encodeFunc func(walker *TypeWalker, v reflect.Value)
+type processorCache sync.Map
+type processorFunc func(walker *TypeWalker, v reflect.Value)
 
 type cacheKey struct {
 	visitorType reflect.Type
 	valType     reflect.Type
 }
 
-var sCache structVisitorCache
+var sCache processorCache
 
-func (cache *structVisitorCache) Find(visitorType reflect.Type, valType reflect.Type) encodeFunc {
+func (cache *processorCache) Find(visitorType reflect.Type, valType reflect.Type) processorFunc {
 	f, ok := (*sync.Map)(cache).Load(cacheKey{
 		visitorType: visitorType,
 		valType:     valType,
@@ -23,10 +23,10 @@ func (cache *structVisitorCache) Find(visitorType reflect.Type, valType reflect.
 	if !ok {
 		return nil
 	}
-	return f.(encodeFunc)
+	return f.(processorFunc)
 }
 
-func (cache *structVisitorCache) Store(visitorType reflect.Type, valType reflect.Type, f encodeFunc) {
+func (cache *processorCache) Store(visitorType reflect.Type, valType reflect.Type, f processorFunc) {
 	(*sync.Map)(cache).Store(cacheKey{
 		visitorType: visitorType,
 		valType:     valType,
@@ -48,12 +48,24 @@ func (w *TypeWalker) Visit(v any, visitor TypeVisitor) {
 	w.visitor = visitor
 	w.visitorType = reflect.TypeOf(visitor)
 	w.depth = 0
-	w.getEncoder(reflect.TypeOf(v))(w, reflect.ValueOf(v))
+	w.getProcessor(reflect.TypeOf(v))(w, reflect.ValueOf(v))
 }
 
-func (w *TypeWalker) getEncoder(valType reflect.Type) encodeFunc {
+func (w *TypeWalker) getProcessor(valType reflect.Type) processorFunc {
 	if f := sCache.Find(w.visitorType, valType); f != nil {
 		return f
 	}
-	return nil
+	f := w.getProcessorSlow(valType)
+	sCache.Store(w.visitorType, valType, f)
+	return f
+}
+
+func (w *TypeWalker) getProcessorSlow(valType reflect.Type) processorFunc {
+	if implementCustomVisitor(valType) {
+
+	}
+	return dummyProcessor
+}
+
+func dummyProcessor(walker *TypeWalker, v reflect.Value) {
 }
