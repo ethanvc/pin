@@ -39,15 +39,19 @@ type TypeWalker struct {
 	depth       int
 }
 
-func (w *TypeWalker) Visit(v any, visitor TypeVisitor) {
+func NewTypeWalker(visitor TypeVisitor) *TypeWalker {
+	w := &TypeWalker{
+		visitor:     visitor,
+		visitorType: reflect.TypeOf(visitor),
+	}
+	return w
+}
+
+func (w *TypeWalker) Visit(v any) {
 	if v == nil {
-		visitor.VisitNil()
+		w.visitor.VisitNil()
 		return
 	}
-
-	w.visitor = visitor
-	w.visitorType = reflect.TypeOf(visitor)
-	w.depth = 0
 	w.getProcessor(reflect.TypeOf(v))(w, reflect.ValueOf(v))
 }
 
@@ -65,12 +69,38 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 
 	}
 
-	f := w.visitor.GetProcessor(valType, "")
-	if f != nil {
-		return f
+	switch valType.Kind() {
+	case reflect.Array:
+	case reflect.Chan:
+		return dummyProcessor
+	case reflect.Func:
+		return dummyProcessor
+	case reflect.Interface:
+	case reflect.Map:
+		return mapProcessor
+	case reflect.Pointer:
+	case reflect.Slice:
+	case reflect.Struct:
+		return structProcessor
 	}
+
 	return dummyProcessor
 }
 
 func dummyProcessor(walker *TypeWalker, v reflect.Value) {
+}
+
+func mapProcessor(walker *TypeWalker, v reflect.Value) {
+
+}
+
+func structProcessor(walker *TypeWalker, v reflect.Value) {
+	valType := v.Type()
+	walker.visitor.OpenStruct()
+	for i := 0; i < valType.NumField(); i++ {
+		field := valType.Field(i)
+		fieldVal := v.Field(i)
+		walker.visitor.VisitField(walker, field, fieldVal)
+	}
+	walker.visitor.CloseStruct()
 }

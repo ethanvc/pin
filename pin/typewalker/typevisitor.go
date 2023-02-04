@@ -3,8 +3,10 @@ package typewalker
 import "reflect"
 
 type TypeVisitor interface {
-	VisitNil() bool
-	GetProcessor(valType reflect.Type, tag string) ProcessorFunc
+	OpenStruct()
+	CloseStruct()
+	VisitNil()
+	VisitField(w *TypeWalker, field reflect.StructField, v reflect.Value)
 }
 
 type CustomVisitor interface {
