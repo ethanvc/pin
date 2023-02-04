@@ -11,7 +11,6 @@ type ProcessorFunc func(walker *TypeWalker, v reflect.Value)
 type cacheKey struct {
 	VisitorType reflect.Type
 	ValType     reflect.Type
-	Tag         string
 }
 
 var sCache processorCache
