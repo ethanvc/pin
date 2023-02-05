@@ -2,11 +2,16 @@ package typewalker
 
 import "reflect"
 
+type Field struct {
+	StructField *reflect.StructField
+	VisitCache  any
+}
+
 type TypeVisitor interface {
 	OpenStruct()
 	CloseStruct()
 	VisitNil()
-	VisitField(w *TypeWalker, field reflect.StructField, v reflect.Value)
+	VisitField(w *TypeWalker, field Field, v reflect.Value)
 }
 
 type CustomVisitor interface {

@@ -71,6 +71,7 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 
 	switch valType.Kind() {
 	case reflect.Array:
+		return w.newArrayProcessor(valType)
 	case reflect.Chan:
 		return dummyProcessor
 	case reflect.Func:
@@ -81,7 +82,7 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	case reflect.Pointer:
 	case reflect.Slice:
 	case reflect.Struct:
-		return structProcessor
+		return newStructProcessor(valType)
 	}
 
 	return dummyProcessor
@@ -94,13 +95,27 @@ func mapProcessor(walker *TypeWalker, v reflect.Value) {
 
 }
 
-func structProcessor(walker *TypeWalker, v reflect.Value) {
-	valType := v.Type()
-	walker.visitor.OpenStruct()
-	for i := 0; i < valType.NumField(); i++ {
-		field := valType.Field(i)
-		fieldVal := v.Field(i)
-		walker.visitor.VisitField(walker, field, fieldVal)
-	}
-	walker.visitor.CloseStruct()
+type structProcessor struct {
+	fields []Field
+}
+
+func newStructProcessor(valType reflect.Type) ProcessorFunc {
+	return nil
+}
+
+func (s structProcessor) process(walker *TypeWalker, v reflect.Value) {
+}
+
+type arrayProcessor struct {
+	elemProcessor ProcessorFunc
+}
+
+func (a arrayProcessor) process(w *TypeWalker, v reflect.Value) {
+
+}
+
+func (w *TypeWalker) newArrayProcessor(valType reflect.Type) ProcessorFunc {
+	elemType := valType.Elem()
+	f := w.getProcessor(elemType)
+	return arrayProcessor{elemProcessor: f}.process
 }
