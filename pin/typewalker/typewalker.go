@@ -5,33 +5,7 @@ import (
 	"sync"
 )
 
-type processorCache sync.Map
 type ProcessorFunc func(walker *TypeWalker, v reflect.Value)
-
-type cacheKey struct {
-	VisitorType reflect.Type
-	ValType     reflect.Type
-}
-
-var sCache processorCache
-
-func (cache *processorCache) Find(visitorType reflect.Type, valType reflect.Type) ProcessorFunc {
-	f, ok := (*sync.Map)(cache).Load(cacheKey{
-		VisitorType: visitorType,
-		ValType:     valType,
-	})
-	if !ok {
-		return nil
-	}
-	return f.(ProcessorFunc)
-}
-
-func (cache *processorCache) Store(visitorType reflect.Type, valType reflect.Type, f ProcessorFunc) {
-	(*sync.Map)(cache).Store(cacheKey{
-		VisitorType: visitorType,
-		ValType:     valType,
-	}, f)
-}
 
 type TypeWalker struct {
 	visitor     TypeVisitor
@@ -59,7 +33,21 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 	if f := sCache.Find(w.visitorType, valType); f != nil {
 		return f
 	}
-	f := w.getProcessorSlow(valType)
+
+	var wg sync.WaitGroup
+	var f ProcessorFunc
+
+	wg.Add(1)
+	f, ok := sCache.LoadOrStore(w.visitorType, valType, func(w *TypeWalker, v reflect.Value) {
+		wg.Wait()
+		f(w, v)
+	})
+	if ok {
+		return f
+	}
+
+	f = w.getProcessorSlow(valType)
+	wg.Done()
 	sCache.Store(w.visitorType, valType, f)
 	return f
 }
@@ -82,7 +70,7 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	case reflect.Pointer:
 	case reflect.Slice:
 	case reflect.Struct:
-		return newStructProcessor(valType)
+		return w.newStructProcessor(valType)
 	}
 
 	return dummyProcessor
@@ -96,10 +84,22 @@ func mapProcessor(walker *TypeWalker, v reflect.Value) {
 }
 
 type structProcessor struct {
-	fields []Field
+	fields []*Field
 }
 
-func newStructProcessor(valType reflect.Type) ProcessorFunc {
+func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
+	fields := reflect.VisibleFields(valType)
+	var p structProcessor
+	for _, field := range fields {
+		if field.Anonymous {
+			continue
+		}
+		newField := Field{
+			StructField: field,
+			Processor:   w.getProcessor(field.Type),
+		}
+		p.fields = append(p.fields, &newField)
+	}
 	return nil
 }
 

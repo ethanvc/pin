@@ -3,7 +3,8 @@ package typewalker
 import "reflect"
 
 type Field struct {
-	StructField *reflect.StructField
+	StructField reflect.StructField
+	Processor   ProcessorFunc
 	VisitCache  any
 }
 
