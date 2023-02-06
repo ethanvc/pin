@@ -21,6 +21,10 @@ func NewTypeWalker(visitor TypeVisitor) *TypeWalker {
 	return w
 }
 
+func (w *TypeWalker) Visitor() TypeVisitor {
+	return w.visitor
+}
+
 func (w *TypeWalker) Visit(v any) {
 	if v == nil {
 		w.visitor.VisitNil()
@@ -103,7 +107,12 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 	return nil
 }
 
-func (s structProcessor) process(walker *TypeWalker, v reflect.Value) {
+func (s structProcessor) process(w *TypeWalker, v reflect.Value) {
+	w.visitor.OpenStruct()
+	for _, field := range s.fields {
+		w.visitor.VisitField(w)
+	}
+	w.visitor.CloseStruct()
 }
 
 type arrayProcessor struct {
