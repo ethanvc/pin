@@ -112,6 +112,7 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 		newField := Field{
 			StructField: field,
 			Processor:   w.getProcessor(field.Type),
+			JsonKey:     field.Name,
 		}
 		p.fields = append(p.fields, &newField)
 	}
@@ -120,6 +121,9 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 
 func (s structProcessor) process(w *TypeWalker, v reflect.Value) {
 	w.visitor.OpenStruct()
+	for _, field := range s.fields {
+		w.Visitor().VisitField(field, v)
+	}
 	w.visitor.CloseStruct()
 }
 

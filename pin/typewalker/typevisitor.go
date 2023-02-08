@@ -3,9 +3,9 @@ package typewalker
 import "reflect"
 
 type Field struct {
-	StructField  reflect.StructField
-	Processor    ProcessorFunc
-	CustomConfig any
+	StructField reflect.StructField
+	Processor   ProcessorFunc
+	JsonKey     string
 }
 
 type MapKey struct {
