@@ -15,13 +15,11 @@ func (j *JsonVisitor) SetWalker(w *TypeWalker) {
 }
 
 func (j *JsonVisitor) OpenStruct() {
-	//TODO implement me
-	panic("implement me")
+	j.B.OpenObject()
 }
 
 func (j *JsonVisitor) CloseStruct() {
-	//TODO implement me
-	panic("implement me")
+	j.B.CloseObject()
 }
 
 func (j *JsonVisitor) OpenArray() {

@@ -115,7 +115,7 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 		}
 		p.fields = append(p.fields, &newField)
 	}
-	return nil
+	return p.process
 }
 
 func (s structProcessor) process(w *TypeWalker, v reflect.Value) {

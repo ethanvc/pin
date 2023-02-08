@@ -6,18 +6,20 @@ import (
 	"testing"
 )
 
-type testStruct struct {
-	F  int
-	F2 int `json:"f2"`
-}
-
 func TestNil(t *testing.T) {
 	assert.Equal(t, base.StructToJsonStr(nil), ToLogJsonStr(nil))
 }
 
-func TestStruct(t *testing.T) {
-	var s testStruct
-	s.F = 3
-	result := ""
-	assert.Equal(t, result, ToLogJsonStr(s))
+func TestEmptyStruct(t *testing.T) {
+	assert.Equal(t, base.StructToJsonStr(struct{}{}), ToLogJsonStr(struct{}{}))
+}
+
+func TestNonEmptyStruct(t *testing.T) {
+	type TestS struct {
+		X int
+	}
+	v := TestS{
+		X: 3,
+	}
+	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }

@@ -22,10 +22,13 @@ func (j *JsonBuilder) CloseArray() *JsonBuilder {
 }
 
 func (j *JsonBuilder) OpenObject() *JsonBuilder {
+	j.beforeWriteValue()
+	j.Buf.Write([]byte("{"))
 	return j
 }
 
 func (j *JsonBuilder) CloseObject() *JsonBuilder {
+	j.Buf.Write([]byte("}"))
 	return j
 }
 
