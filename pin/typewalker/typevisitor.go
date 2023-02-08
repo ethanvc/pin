@@ -8,21 +8,23 @@ type Field struct {
 	CustomConfig any
 }
 
+type MapKey struct {
+}
+
 type TypeVisitor interface {
-	OpenStruct(w *TypeWalker)
-	CloseStruct(w *TypeWalker)
-	OpenArray(w *TypeWalker)
-	CloseArray(w *TypeWalker)
-	OpenMap(w *TypeWalker)
-	CloseMap(w *TypeWalker)
-	VisitNil(w *TypeWalker)
-	VisitBool(w *TypeWalker, v reflect.Value)
-	VisitInt64(w *TypeWalker, v reflect.Value)
-	VisitUint64(w *TypeWalker, v reflect.Value)
-	VisitFloat64(w *TypeWalker, v reflect.Value)
-	VisitString(w *TypeWalker, v reflect.Value)
-	VisitBytes(w *TypeWalker, v reflect.Value)
-	VisitField(w *TypeWalker, field Field, v reflect.Value)
+	SetWalker(w *TypeWalker)
+	OpenStruct()
+	CloseStruct()
+	OpenArray()
+	CloseArray()
+	VisitNil()
+	VisitBool(field *Field, v reflect.Value)
+	VisitInt64(field *Field, v reflect.Value)
+	VisitUint64(field *Field, v reflect.Value)
+	VisitFloat64(field *Field, v reflect.Value)
+	VisitString(field *Field, v reflect.Value)
+	VisitBytes(field *Field, v reflect.Value)
+	VisitField(field *Field, v reflect.Value)
 }
 
 type CustomVisitor interface {

@@ -6,34 +6,69 @@ import (
 )
 
 type JsonVisitor struct {
-	b base.JsonBuilder
+	w *TypeWalker
+	B base.JsonBuilder
+}
+
+func (j *JsonVisitor) SetWalker(w *TypeWalker) {
+	j.w = w
 }
 
 func (j *JsonVisitor) OpenStruct() {
-	j.b.OpenObject()
+	//TODO implement me
+	panic("implement me")
 }
 
 func (j *JsonVisitor) CloseStruct() {
-	j.b.CloseObject()
+	//TODO implement me
+	panic("implement me")
 }
 
 func (j *JsonVisitor) OpenArray() {
-	j.b.OpenArray()
+	//TODO implement me
+	panic("implement me")
 }
 
 func (j *JsonVisitor) CloseArray() {
-	j.b.CloseArray()
+	//TODO implement me
+	panic("implement me")
 }
 
 func (j *JsonVisitor) VisitNil() {
-	j.b.WriteValueNull()
+	j.B.WriteValueNull()
 }
 
-func (j *JsonVisitor) VisitField(w *TypeWalker, field reflect.StructField, v reflect.Value) {
-	j.b.WriteKey(j.getKey(field))
-	w.Visit(v)
+func (j *JsonVisitor) VisitBool(field *Field, v reflect.Value) {
+	//TODO implement me
+	panic("implement me")
 }
 
-func (j *JsonVisitor) getKey(field reflect.StructField) string {
-	return field.Name
+func (j *JsonVisitor) VisitInt64(field *Field, v reflect.Value) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (j *JsonVisitor) VisitFloat64(field *Field, v reflect.Value) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (j *JsonVisitor) VisitString(field *Field, v reflect.Value) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (j *JsonVisitor) VisitField(field *Field, v reflect.Value) {
+	//TODO implement me
+	panic("implement me")
 }

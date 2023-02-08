@@ -2,13 +2,13 @@ package typewalker
 
 import "github.com/ethanvc/pin/pin/base"
 
-func ToJson(v any) []byte {
+func ToLogJson(v any) []byte {
 	var visitor JsonVisitor
 	w := NewTypeWalker(&visitor)
 	w.Visit(v)
-	return nil
+	return visitor.B.Bytes()
 }
 
-func ToJsonStr(v any) string {
-	return base.BytesToStr(ToJson(v))
+func ToLogJsonStr(v any) string {
+	return base.BytesToStr(ToLogJson(v))
 }

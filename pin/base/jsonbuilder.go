@@ -1,7 +1,16 @@
 package base
 
 type JsonBuilder struct {
-	buf Buffer
+	Buf      Buffer
+	commaSep []byte
+}
+
+func (j *JsonBuilder) String() string {
+	return j.Buf.String()
+}
+
+func (j *JsonBuilder) Bytes() []byte {
+	return j.Buf.Bytes()
 }
 
 func (j *JsonBuilder) OpenArray() *JsonBuilder {
@@ -29,5 +38,12 @@ func (j *JsonBuilder) WriteValueBool(v bool) *JsonBuilder {
 }
 
 func (j *JsonBuilder) WriteValueNull() *JsonBuilder {
+	j.beforeWriteValue()
+	j.Buf.Write([]byte("null"))
+	return j
+}
+
+func (j *JsonBuilder) beforeWriteValue() *JsonBuilder {
+	j.Buf.Write(j.commaSep)
 	return j
 }

@@ -18,6 +18,7 @@ func NewTypeWalker(visitor TypeVisitor) *TypeWalker {
 		visitor:     visitor,
 		visitorType: reflect.TypeOf(visitor),
 	}
+	visitor.SetWalker(w)
 	return w
 }
 
@@ -26,11 +27,16 @@ func (w *TypeWalker) Visitor() TypeVisitor {
 }
 
 func (w *TypeWalker) Visit(v any) {
-	if v == nil {
-		w.visitor.VisitNil()
-		return
+	vv := reflect.ValueOf(v)
+	w.getProcessorByValue(vv)(w, vv)
+}
+
+func (w *TypeWalker) getProcessorByValue(v reflect.Value) ProcessorFunc {
+	if v.Kind() == reflect.Invalid {
+		return nilProcess
 	}
-	w.getProcessor(reflect.TypeOf(v))(w, reflect.ValueOf(v))
+	valType := v.Type()
+	return w.getProcessor(valType)
 }
 
 func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
@@ -54,6 +60,14 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 	wg.Done()
 	sCache.Store(w.visitorType, valType, f)
 	return f
+}
+
+func nilProcess(w *TypeWalker, v reflect.Value) {
+	w.Visitor().VisitNil()
+}
+
+func customVisitorProcess(w *TypeWalker, v reflect.Value) {
+
 }
 
 func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
@@ -95,9 +109,6 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 	fields := reflect.VisibleFields(valType)
 	var p structProcessor
 	for _, field := range fields {
-		if field.Anonymous {
-			continue
-		}
 		newField := Field{
 			StructField: field,
 			Processor:   w.getProcessor(field.Type),
@@ -109,9 +120,6 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 
 func (s structProcessor) process(w *TypeWalker, v reflect.Value) {
 	w.visitor.OpenStruct()
-	for _, field := range s.fields {
-		w.visitor.VisitField(w)
-	}
 	w.visitor.CloseStruct()
 }
 
