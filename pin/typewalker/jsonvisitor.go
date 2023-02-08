@@ -67,6 +67,6 @@ func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value) {
 }
 
 func (j *JsonVisitor) VisitField(field *Field, v reflect.Value) {
-	//TODO implement me
-	panic("implement me")
+	j.B.WriteKey(field.JsonKey)
+	field.Processor(j.w, field, v.FieldByIndex(field.StructField.Index))
 }

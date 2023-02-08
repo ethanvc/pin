@@ -6,6 +6,7 @@ func ToLogJson(v any) []byte {
 	var visitor JsonVisitor
 	w := NewTypeWalker(&visitor)
 	w.Visit(v)
+	visitor.B.Finish()
 	return visitor.B.Bytes()
 }
 

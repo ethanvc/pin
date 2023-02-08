@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type ProcessorFunc func(walker *TypeWalker, v reflect.Value)
+type ProcessorFunc func(walker *TypeWalker, field *Field, v reflect.Value)
 
 type TypeWalker struct {
 	visitor     TypeVisitor
@@ -28,7 +28,7 @@ func (w *TypeWalker) Visitor() TypeVisitor {
 
 func (w *TypeWalker) Visit(v any) {
 	vv := reflect.ValueOf(v)
-	w.getProcessorByValue(vv)(w, vv)
+	w.getProcessorByValue(vv)(w, nil, vv)
 }
 
 func (w *TypeWalker) getProcessorByValue(v reflect.Value) ProcessorFunc {
@@ -48,9 +48,9 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 	var f ProcessorFunc
 
 	wg.Add(1)
-	f, ok := sCache.LoadOrStore(w.visitorType, valType, func(w *TypeWalker, v reflect.Value) {
+	f, ok := sCache.LoadOrStore(w.visitorType, valType, func(w *TypeWalker, field *Field, v reflect.Value) {
 		wg.Wait()
-		f(w, v)
+		f(w, field, v)
 	})
 	if ok {
 		return f
@@ -62,7 +62,7 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 	return f
 }
 
-func nilProcess(w *TypeWalker, v reflect.Value) {
+func nilProcess(w *TypeWalker, field *Field, v reflect.Value) {
 	w.Visitor().VisitNil()
 }
 
@@ -84,7 +84,6 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 		return dummyProcessor
 	case reflect.Interface:
 	case reflect.Map:
-		return mapProcessor
 	case reflect.Pointer:
 	case reflect.Slice:
 	case reflect.Struct:
@@ -94,7 +93,7 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	return dummyProcessor
 }
 
-func dummyProcessor(walker *TypeWalker, v reflect.Value) {
+func dummyProcessor(walker *TypeWalker, field *Field, v reflect.Value) {
 }
 
 func mapProcessor(walker *TypeWalker, v reflect.Value) {
@@ -119,7 +118,7 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 	return p.process
 }
 
-func (s structProcessor) process(w *TypeWalker, v reflect.Value) {
+func (s structProcessor) process(w *TypeWalker, _ *Field, v reflect.Value) {
 	w.visitor.OpenStruct()
 	for _, field := range s.fields {
 		w.Visitor().VisitField(field, v)
@@ -131,7 +130,7 @@ type arrayProcessor struct {
 	elemProcessor ProcessorFunc
 }
 
-func (a arrayProcessor) process(w *TypeWalker, v reflect.Value) {
+func (a arrayProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
 
 }
 
