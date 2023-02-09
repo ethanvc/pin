@@ -88,9 +88,15 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	case reflect.Slice:
 	case reflect.Struct:
 		return w.newStructProcessor(valType)
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
+		return intProcessor
 	}
 
 	return dummyProcessor
+}
+
+func intProcessor(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().VisitInt64(field, v)
 }
 
 func dummyProcessor(walker *TypeWalker, field *Field, v reflect.Value) {

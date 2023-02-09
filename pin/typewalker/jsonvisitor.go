@@ -42,13 +42,11 @@ func (j *JsonVisitor) VisitBool(field *Field, v reflect.Value) {
 }
 
 func (j *JsonVisitor) VisitInt64(field *Field, v reflect.Value) {
-	//TODO implement me
-	panic("implement me")
+	j.B.WriteValueInt64(v.Int())
 }
 
 func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value) {
-	//TODO implement me
-	panic("implement me")
+	j.B.WriteValueInt64(v.Int())
 }
 
 func (j *JsonVisitor) VisitFloat64(field *Field, v reflect.Value) {

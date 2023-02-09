@@ -1,5 +1,7 @@
 package base
 
+import "strconv"
+
 type JsonBuilder struct {
 	Buf Buffer
 }
@@ -26,6 +28,7 @@ func (j *JsonBuilder) OpenObject() *JsonBuilder {
 }
 
 func (j *JsonBuilder) CloseObject() *JsonBuilder {
+	j.removeComma()
 	j.Buf.Write([]byte("}"))
 	j.writeComma()
 	return j
@@ -45,6 +48,13 @@ func (j *JsonBuilder) WriteValueBool(v bool) *JsonBuilder {
 
 func (j *JsonBuilder) WriteValueNull() *JsonBuilder {
 	j.Buf.Write([]byte("null"))
+	j.writeComma()
+	return j
+}
+
+func (j *JsonBuilder) WriteValueInt64(v int64) *JsonBuilder {
+	s := strconv.FormatInt(v, 10)
+	j.Buf.WriteString(s)
 	j.writeComma()
 	return j
 }
