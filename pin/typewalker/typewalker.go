@@ -2,6 +2,7 @@ package typewalker
 
 import (
 	"reflect"
+	"strings"
 	"sync"
 )
 
@@ -122,14 +123,39 @@ type structProcessor struct {
 	fields []*Field
 }
 
+type PinTag struct {
+	Name      string
+	OmitEmpty bool
+	Quoted    bool
+}
+
+func parsePinTag(field reflect.StructField) PinTag {
+	pinTag := PinTag{}
+	tagVal := field.Tag.Get("json")
+	if tagVal != "-" {
+		n, param, _ := strings.Cut(tagVal, ",")
+		if len(n) > 0 {
+			pinTag.Name = n
+		} else {
+			pinTag.Name = field.Name
+		}
+		pinTag.Quoted = strings.Contains(param, "string")
+		pinTag.OmitEmpty = strings.Contains(param, "omitempty")
+	}
+	return pinTag
+}
+
 func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 	fields := reflect.VisibleFields(valType)
 	var p structProcessor
 	for _, field := range fields {
+		pinTag := parsePinTag(field)
 		newField := Field{
 			StructField: field,
 			Processor:   w.getProcessor(field.Type),
-			JsonKey:     field.Name,
+			JsonKey:     pinTag.Name,
+			OmitEmpty:   pinTag.OmitEmpty,
+			Quoted:      pinTag.Quoted,
 		}
 		p.fields = append(p.fields, &newField)
 	}

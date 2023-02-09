@@ -20,6 +20,7 @@ func TestFeatureStruct(t *testing.T) {
 		X1 string
 		X2 []byte
 		X3 []int
+		X4 int `json:"xx4"`
 	}
 	v := TestS{
 		X:  3,

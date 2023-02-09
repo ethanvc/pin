@@ -6,6 +6,8 @@ type Field struct {
 	StructField reflect.StructField
 	Processor   ProcessorFunc
 	JsonKey     string
+	OmitEmpty   bool
+	Quoted      bool
 }
 
 type MapKey struct {
