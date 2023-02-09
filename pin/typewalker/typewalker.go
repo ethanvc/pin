@@ -144,12 +144,16 @@ func (s structProcessor) process(w *TypeWalker, _ *Field, v reflect.Value) {
 	w.visitor.CloseStruct()
 }
 
-type arrayProcessor struct {
+type sliceProcessor struct {
 	elemProcessor ProcessorFunc
 }
 
-func (a arrayProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
-
+func (a sliceProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().OpenArray()
+	for i := 0; i < v.Len(); i++ {
+		a.elemProcessor(w, field, v.Index(i))
+	}
+	w.Visitor().CloseArray()
 }
 
 func (w *TypeWalker) newSliceProcessor(valType reflect.Type) ProcessorFunc {
@@ -158,7 +162,7 @@ func (w *TypeWalker) newSliceProcessor(valType reflect.Type) ProcessorFunc {
 		return bytesProcessor
 	}
 	f := w.getProcessor(elemType)
-	return arrayProcessor{elemProcessor: f}.process
+	return sliceProcessor{elemProcessor: f}.process
 }
 
 func bytesProcessor(w *TypeWalker, field *Field, v reflect.Value) {

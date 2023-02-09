@@ -15,10 +15,14 @@ func (j *JsonBuilder) Bytes() []byte {
 }
 
 func (j *JsonBuilder) OpenArray() *JsonBuilder {
+	j.Buf.WriteByte('[')
 	return j
 }
 
 func (j *JsonBuilder) CloseArray() *JsonBuilder {
+	j.removeComma()
+	j.Buf.WriteByte(']')
+	j.writeComma()
 	return j
 }
 

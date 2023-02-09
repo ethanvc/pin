@@ -24,13 +24,11 @@ func (j *JsonVisitor) CloseStruct() {
 }
 
 func (j *JsonVisitor) OpenArray() {
-	//TODO implement me
-	panic("implement me")
+	j.B.OpenArray()
 }
 
 func (j *JsonVisitor) CloseArray() {
-	//TODO implement me
-	panic("implement me")
+	j.B.CloseArray()
 }
 
 func (j *JsonVisitor) VisitNil() {

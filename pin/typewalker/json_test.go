@@ -19,11 +19,13 @@ func TestFeatureStruct(t *testing.T) {
 		X  int
 		X1 string
 		X2 []byte
+		X3 []int
 	}
 	v := TestS{
 		X:  3,
 		X1: "hello world",
 		X2: []byte("hello world2"),
+		X3: []int{3, 4, 5},
 	}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }
