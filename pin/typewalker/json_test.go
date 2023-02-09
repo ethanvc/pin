@@ -14,22 +14,14 @@ func TestEmptyStruct(t *testing.T) {
 	assert.Equal(t, base.StructToJsonStr(struct{}{}), ToLogJsonStr(struct{}{}))
 }
 
-func TestNonEmptyStruct(t *testing.T) {
+func TestFeatureStruct(t *testing.T) {
 	type TestS struct {
 		X  int
-		X1 int8
-		X2 int16
-		X3 int32
-		X4 int64
-		Y  uint
-		Y1 uint8
-		Y2 uint16
-		Y3 uint32
-		Y4 uint64
-		Y5 byte
+		X1 string
 	}
 	v := TestS{
-		X: 3,
+		X:  3,
+		X1: "hello world",
 	}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }

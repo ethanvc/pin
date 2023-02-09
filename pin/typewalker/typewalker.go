@@ -86,6 +86,8 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	case reflect.Map:
 	case reflect.Pointer:
 	case reflect.Slice:
+	case reflect.String:
+		return stringProcessor
 	case reflect.Struct:
 		return w.newStructProcessor(valType)
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
@@ -95,6 +97,10 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	}
 
 	return dummyProcessor
+}
+
+func stringProcessor(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().VisitString(field, v)
 }
 
 func uintProcessor(w *TypeWalker, field *Field, v reflect.Value) {

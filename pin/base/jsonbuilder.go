@@ -66,6 +66,14 @@ func (j *JsonBuilder) WriteValueUint64(v uint64) *JsonBuilder {
 	return j
 }
 
+func (j *JsonBuilder) WriteValueString(s string) *JsonBuilder {
+	j.Buf.WriteByte('"')
+	j.Buf.WriteString(s)
+	j.Buf.WriteByte('"')
+	j.writeComma()
+	return j
+}
+
 func (j *JsonBuilder) Finish() {
 	j.removeComma()
 }

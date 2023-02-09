@@ -55,8 +55,7 @@ func (j *JsonVisitor) VisitFloat64(field *Field, v reflect.Value) {
 }
 
 func (j *JsonVisitor) VisitString(field *Field, v reflect.Value) {
-	//TODO implement me
-	panic("implement me")
+	j.B.WriteValueString(v.String())
 }
 
 func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value) {
