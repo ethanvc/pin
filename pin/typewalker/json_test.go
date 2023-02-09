@@ -16,7 +16,17 @@ func TestEmptyStruct(t *testing.T) {
 
 func TestNonEmptyStruct(t *testing.T) {
 	type TestS struct {
-		X int
+		X  int
+		X1 int8
+		X2 int16
+		X3 int32
+		X4 int64
+		Y  uint
+		Y1 uint8
+		Y2 uint16
+		Y3 uint32
+		Y4 uint64
+		Y5 byte
 	}
 	v := TestS{
 		X: 3,

@@ -59,6 +59,13 @@ func (j *JsonBuilder) WriteValueInt64(v int64) *JsonBuilder {
 	return j
 }
 
+func (j *JsonBuilder) WriteValueUint64(v uint64) *JsonBuilder {
+	s := strconv.FormatUint(v, 10)
+	j.Buf.WriteString(s)
+	j.writeComma()
+	return j
+}
+
 func (j *JsonBuilder) Finish() {
 	j.removeComma()
 }

@@ -46,7 +46,7 @@ func (j *JsonVisitor) VisitInt64(field *Field, v reflect.Value) {
 }
 
 func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value) {
-	j.B.WriteValueInt64(v.Int())
+	j.B.WriteValueUint64(v.Uint())
 }
 
 func (j *JsonVisitor) VisitFloat64(field *Field, v reflect.Value) {
