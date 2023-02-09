@@ -1,6 +1,7 @@
 package typewalker
 
 import (
+	"encoding/base64"
 	"github.com/ethanvc/pin/pin/base"
 	"reflect"
 )
@@ -59,8 +60,7 @@ func (j *JsonVisitor) VisitString(field *Field, v reflect.Value) {
 }
 
 func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value) {
-	//TODO implement me
-	panic("implement me")
+	j.B.WriteValueString(base64.StdEncoding.EncodeToString(v.Bytes()))
 }
 
 func (j *JsonVisitor) VisitField(field *Field, v reflect.Value) {

@@ -154,6 +154,13 @@ func (a arrayProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
 
 func (w *TypeWalker) newArrayProcessor(valType reflect.Type) ProcessorFunc {
 	elemType := valType.Elem()
+	if elemType.Kind() == reflect.Uint8 {
+		return bytesProcessor
+	}
 	f := w.getProcessor(elemType)
 	return arrayProcessor{elemProcessor: f}.process
+}
+
+func bytesProcessor(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().VisitBytes(field, v)
 }
