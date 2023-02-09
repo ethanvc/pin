@@ -18,10 +18,12 @@ func TestFeatureStruct(t *testing.T) {
 	type TestS struct {
 		X  int
 		X1 string
+		X2 []byte
 	}
 	v := TestS{
 		X:  3,
 		X1: "hello world",
+		X2: []byte("hello world2"),
 	}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }
