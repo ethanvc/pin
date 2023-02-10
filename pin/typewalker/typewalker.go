@@ -122,10 +122,7 @@ type structProcessor struct {
 	fields []*Field
 }
 
-func ancestorOf(ancestor, t *reflect.StructField) bool {
-	if ancestor == nil {
-		return false
-	}
+func ancestorOf(ancestor, t reflect.StructField) bool {
 	if len(ancestor.Index) >= len(t.Index) {
 		return false
 	}
@@ -138,21 +135,25 @@ func ancestorOf(ancestor, t *reflect.StructField) bool {
 }
 
 func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
-	fields := reflect.VisibleFields(valType)
 	var p structProcessor
-	var ignoredField *reflect.StructField
+	var rootField reflect.StructField
+	fields := reflect.VisibleFields(valType)
 	for _, field := range fields {
-		if ancestorOf(ignoredField, &field) {
+		if ancestorOf(rootField, field) {
 			continue
 		}
-		if field.Tag.Get("json") == "-" {
-			ignoredField = &field
+		jsonPart := field.Tag.Get("json")
+		if jsonPart == "-" {
+			rootField = field
+			continue
+		}
+		if field.Anonymous && jsonPart == "" {
 			continue
 		}
 		newF := newField(field)
 		newF.Processor = w.getProcessor(field.Type)
 		p.fields = append(p.fields, newF)
-
+		rootField = field
 	}
 	return p.process
 }

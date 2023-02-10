@@ -11,7 +11,6 @@ type Field struct {
 	JsonKey     string
 	OmitEmpty   bool
 	Quoted      bool
-	Ignore      bool
 }
 
 func newField(field reflect.StructField) *Field {
@@ -19,20 +18,14 @@ func newField(field reflect.StructField) *Field {
 		StructField: field,
 	}
 	tagVal := field.Tag.Get("json")
-	if tagVal == "-" {
-		f.Ignore = true
-		return f
+	n, param, _ := strings.Cut(tagVal, ",")
+	if len(n) > 0 {
+		f.JsonKey = n
+	} else {
+		f.JsonKey = field.Name
 	}
-	if tagVal != "-" {
-		n, param, _ := strings.Cut(tagVal, ",")
-		if len(n) > 0 {
-			f.JsonKey = n
-		} else {
-			f.JsonKey = field.Name
-		}
-		f.Quoted = strings.Contains(param, "string")
-		f.OmitEmpty = strings.Contains(param, "omitempty")
-	}
+	f.Quoted = strings.Contains(param, "string")
+	f.OmitEmpty = strings.Contains(param, "omitempty")
 	return f
 }
 

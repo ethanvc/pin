@@ -28,7 +28,6 @@ func TestFeatureStruct(t *testing.T) {
 		X3 []int
 		X4 int `json:"xx4"`
 		Embed
-		Embed1 `json:"embedded_struct"`
 	}
 	v := TestS{
 		X:  3,
@@ -36,5 +35,16 @@ func TestFeatureStruct(t *testing.T) {
 		X2: []byte("hello world2"),
 		X3: []int{3, 4, 5},
 	}
+	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
+}
+
+func TestEmbeddedStructWithTagName(t *testing.T) {
+	type Embed struct {
+		E1 int
+	}
+	type S1 struct {
+		Embed `json:"embed"`
+	}
+	v := S1{}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }
