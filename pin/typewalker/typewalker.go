@@ -2,7 +2,6 @@ package typewalker
 
 import (
 	"reflect"
-	"strings"
 	"sync"
 )
 
@@ -123,41 +122,37 @@ type structProcessor struct {
 	fields []*Field
 }
 
-type PinTag struct {
-	Name      string
-	OmitEmpty bool
-	Quoted    bool
-}
-
-func parsePinTag(field reflect.StructField) PinTag {
-	pinTag := PinTag{}
-	tagVal := field.Tag.Get("json")
-	if tagVal != "-" {
-		n, param, _ := strings.Cut(tagVal, ",")
-		if len(n) > 0 {
-			pinTag.Name = n
-		} else {
-			pinTag.Name = field.Name
-		}
-		pinTag.Quoted = strings.Contains(param, "string")
-		pinTag.OmitEmpty = strings.Contains(param, "omitempty")
+func ancestorOf(ancestor, t *reflect.StructField) bool {
+	if ancestor == nil {
+		return false
 	}
-	return pinTag
+	if len(ancestor.Index) >= len(t.Index) {
+		return false
+	}
+	for i := 0; i < len(ancestor.Index); i++ {
+		if ancestor.Index[i] != t.Index[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 	fields := reflect.VisibleFields(valType)
 	var p structProcessor
+	var ignoredField *reflect.StructField
 	for _, field := range fields {
-		pinTag := parsePinTag(field)
-		newField := Field{
-			StructField: field,
-			Processor:   w.getProcessor(field.Type),
-			JsonKey:     pinTag.Name,
-			OmitEmpty:   pinTag.OmitEmpty,
-			Quoted:      pinTag.Quoted,
+		if ancestorOf(ignoredField, &field) {
+			continue
 		}
-		p.fields = append(p.fields, &newField)
+		if field.Tag.Get("json") == "-" {
+			ignoredField = &field
+			continue
+		}
+		newF := newField(field)
+		newF.Processor = w.getProcessor(field.Type)
+		p.fields = append(p.fields, newF)
+
 	}
 	return p.process
 }
