@@ -123,6 +123,9 @@ type structProcessor struct {
 }
 
 func ancestorOf(ancestor, t reflect.StructField) bool {
+	if len(ancestor.Index) == 0 {
+		return false
+	}
 	if len(ancestor.Index) >= len(t.Index) {
 		return false
 	}
