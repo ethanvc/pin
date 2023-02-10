@@ -48,3 +48,20 @@ func TestEmbeddedStructWithTagName(t *testing.T) {
 	v := S1{}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }
+
+func TestSliceType(t *testing.T) {
+	type S struct {
+		X []int
+	}
+	v := S{X: []int{1, 2}}
+	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
+}
+
+func TestArrayType(t *testing.T) {
+	type S struct {
+		X [2]int
+		Y [2]byte
+	}
+	v := S{X: [...]int{8, 0}}
+	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
+}

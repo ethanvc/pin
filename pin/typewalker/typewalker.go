@@ -84,8 +84,9 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	case reflect.Map:
 	case reflect.Pointer:
 	case reflect.Slice:
-		return w.newSliceProcessor(valType)
+		return w.newSliceProcessor(valType, false)
 	case reflect.Array:
+		return w.newSliceProcessor(valType, true)
 	case reflect.String:
 		return stringProcessor
 	case reflect.Struct:
@@ -181,9 +182,9 @@ func (a sliceProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
 	w.Visitor().CloseArray()
 }
 
-func (w *TypeWalker) newSliceProcessor(valType reflect.Type) ProcessorFunc {
+func (w *TypeWalker) newSliceProcessor(valType reflect.Type, array bool) ProcessorFunc {
 	elemType := valType.Elem()
-	if elemType.Kind() == reflect.Uint8 {
+	if !array && elemType.Kind() == reflect.Uint8 {
 		return bytesProcessor
 	}
 	f := w.getProcessor(elemType)
