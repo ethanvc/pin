@@ -15,12 +15,20 @@ func TestEmptyStruct(t *testing.T) {
 }
 
 func TestFeatureStruct(t *testing.T) {
+	type Embed struct {
+		E1 int
+	}
+	type Embed1 struct {
+		E2 int
+	}
 	type TestS struct {
 		X  int
 		X1 string
 		X2 []byte
 		X3 []int
 		X4 int `json:"xx4"`
+		Embed
+		Embed1 `json:"embedded_struct"`
 	}
 	v := TestS{
 		X:  3,
