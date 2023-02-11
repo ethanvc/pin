@@ -58,7 +58,7 @@ func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value, key bool) {
 
 func (j *JsonVisitor) VisitField(field *Field, v reflect.Value) {
 	j.B.WriteKey(field.JsonKey)
-	field.Processor(j.w, field, v.FieldByIndex(field.StructField.Index), true)
+	field.Processor(j.w, field, v.FieldByIndex(field.StructField.Index), false)
 }
 
 func (j *JsonVisitor) OpenMap() {
