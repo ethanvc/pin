@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"github.com/ethanvc/pin/pin/base"
 	"reflect"
+	"strconv"
 )
 
 type JsonVisitor struct {
@@ -32,7 +33,11 @@ func (j *JsonVisitor) CloseArray() {
 }
 
 func (j *JsonVisitor) VisitInt64(field *Field, v reflect.Value, key bool) {
-	j.B.WriteValueInt64(v.Int())
+	if key {
+		j.B.WriteKey(strconv.FormatInt(v.Int(), 10))
+	} else {
+		j.B.WriteValueInt64(v.Int())
+	}
 }
 
 func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value, key bool) {
@@ -53,7 +58,7 @@ func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value, key bool) {
 
 func (j *JsonVisitor) VisitField(field *Field, v reflect.Value) {
 	j.B.WriteKey(field.JsonKey)
-	field.Processor(j.w, field, v.FieldByIndex(field.StructField.Index))
+	field.Processor(j.w, field, v.FieldByIndex(field.StructField.Index), true)
 }
 
 func (j *JsonVisitor) OpenMap() {

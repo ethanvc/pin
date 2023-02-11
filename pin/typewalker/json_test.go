@@ -67,5 +67,11 @@ func TestMapType(t *testing.T) {
 		"hello": 3,
 	}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
+}
 
+func TestMapTYpeDigitKey(t *testing.T) {
+	v := map[int]int{
+		4: 3,
+	}
+	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }

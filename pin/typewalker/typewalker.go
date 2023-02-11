@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-type ProcessorFunc func(walker *TypeWalker, field *Field, v reflect.Value)
+type ProcessorFunc func(walker *TypeWalker, field *Field, v reflect.Value, key bool)
 
 type TypeWalker struct {
 	visitor     TypeVisitor
@@ -28,7 +28,7 @@ func (w *TypeWalker) Visitor() TypeVisitor {
 
 func (w *TypeWalker) Visit(v any) {
 	vv := reflect.ValueOf(v)
-	w.getProcessorByValue(vv)(w, nil, vv)
+	w.getProcessorByValue(vv)(w, nil, vv, true)
 }
 
 func (w *TypeWalker) getProcessorByValue(v reflect.Value) ProcessorFunc {
@@ -36,10 +36,10 @@ func (w *TypeWalker) getProcessorByValue(v reflect.Value) ProcessorFunc {
 		return nilProcess
 	}
 	valType := v.Type()
-	return w.getProcessor(valType, false)
+	return w.getProcessor(valType)
 }
 
-func (w *TypeWalker) getProcessor(valType reflect.Type, key bool) ProcessorFunc {
+func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 	if f := sCache.Find(w.visitorType, valType); f != nil {
 		return f
 	}
@@ -48,24 +48,24 @@ func (w *TypeWalker) getProcessor(valType reflect.Type, key bool) ProcessorFunc 
 	var f ProcessorFunc
 
 	wg.Add(1)
-	f, ok := sCache.LoadOrStore(w.visitorType, valType, func(w *TypeWalker, field *Field, v reflect.Value) {
+	f, ok := sCache.LoadOrStore(w.visitorType, valType, func(w *TypeWalker, field *Field, v reflect.Value, key bool) {
 		wg.Wait()
-		f(w, field, v)
+		f(w, field, v, key)
 	})
 	if ok {
 		return f
 	}
 
-	f = w.getProcessorSlow(valType, key)
+	f = w.getProcessorSlow(valType)
 	wg.Done()
 	sCache.Store(w.visitorType, valType, f)
 	return f
 }
 
-func nilProcess(w *TypeWalker, field *Field, v reflect.Value) {
+func nilProcess(w *TypeWalker, field *Field, v reflect.Value, key bool) {
 }
 
-func (w *TypeWalker) getProcessorSlow(valType reflect.Type, key bool) ProcessorFunc {
+func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 	if implementCustomVisitor(valType) {
 
 	}
@@ -77,76 +77,71 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type, key bool) ProcessorF
 		return dummyProcessor
 	case reflect.Interface:
 	case reflect.Map:
-		return w.newMapProcessor(valType, key)
+		return w.newMapProcessor(valType)
 	case reflect.Pointer:
 	case reflect.Slice:
-		return w.newSliceProcessor(valType, false, key)
+		return w.newSliceProcessor(valType, false)
 	case reflect.Array:
-		return w.newSliceProcessor(valType, true, key)
+		return w.newSliceProcessor(valType, true)
 	case reflect.String:
-		return stringProcessor{key: key}.process
+		return stringProcessor{}.process
 	case reflect.Struct:
 		return w.newStructProcessor(valType)
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-		return intProcessor{key: key}.process
+		return intProcessor{}.process
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
-		return uintProcessor{key: key}.process
+		return uintProcessor{}.process
 	}
 
 	return dummyProcessor
 }
 
-func (w *TypeWalker) newMapProcessor(valType reflect.Type, key bool) ProcessorFunc {
+func (w *TypeWalker) newMapProcessor(valType reflect.Type) ProcessorFunc {
 	p := mapProcessor{}
-	p.keyProcessor = w.getProcessor(valType.Key(), true)
-	p.valProcessor = w.getProcessor(valType.Elem(), false)
-	p.key = key
+	p.keyProcessor = w.getProcessor(valType.Key())
+	p.valProcessor = w.getProcessor(valType.Elem())
 	return p.process
 }
 
 type mapProcessor struct {
 	keyProcessor ProcessorFunc
 	valProcessor ProcessorFunc
-	key          bool
 }
 
-func (p mapProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
+func (p mapProcessor) process(w *TypeWalker, field *Field, v reflect.Value, key bool) {
 	w.Visitor().OpenMap()
 	iter := v.MapRange()
 	for iter.Next() {
 		key := iter.Key()
-		p.keyProcessor(w, field, key)
+		p.keyProcessor(w, field, key, true)
 		val := iter.Value()
-		p.valProcessor(w, field, val)
+		p.valProcessor(w, field, val, false)
 	}
 	w.Visitor().CloseMap()
 }
 
 type stringProcessor struct {
-	key bool
 }
 
-func (p stringProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitString(field, v, p.key)
+func (p stringProcessor) process(w *TypeWalker, field *Field, v reflect.Value, key bool) {
+	w.Visitor().VisitString(field, v, key)
 }
 
 type intProcessor struct {
-	key bool
 }
 
-func (p intProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitInt64(field, v, p.key)
+func (p intProcessor) process(w *TypeWalker, field *Field, v reflect.Value, key bool) {
+	w.Visitor().VisitInt64(field, v, key)
 }
 
 type uintProcessor struct {
-	key bool
 }
 
-func (p uintProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitUint64(field, v, p.key)
+func (p uintProcessor) process(w *TypeWalker, field *Field, v reflect.Value, key bool) {
+	w.Visitor().VisitUint64(field, v, key)
 }
 
-func dummyProcessor(walker *TypeWalker, field *Field, v reflect.Value) {
+func dummyProcessor(walker *TypeWalker, field *Field, v reflect.Value, key bool) {
 }
 
 type structProcessor struct {
@@ -185,14 +180,14 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 			continue
 		}
 		newF := newField(field)
-		newF.Processor = w.getProcessor(field.Type, false)
+		newF.Processor = w.getProcessor(field.Type)
 		p.fields = append(p.fields, newF)
 		rootField = field
 	}
 	return p.process
 }
 
-func (s structProcessor) process(w *TypeWalker, _ *Field, v reflect.Value) {
+func (s structProcessor) process(w *TypeWalker, _ *Field, v reflect.Value, key bool) {
 	w.visitor.OpenStruct()
 	for _, field := range s.fields {
 		w.Visitor().VisitField(field, v)
@@ -204,23 +199,23 @@ type sliceProcessor struct {
 	elemProcessor ProcessorFunc
 }
 
-func (a sliceProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
+func (a sliceProcessor) process(w *TypeWalker, field *Field, v reflect.Value, key bool) {
 	w.Visitor().OpenArray()
 	for i := 0; i < v.Len(); i++ {
-		a.elemProcessor(w, field, v.Index(i))
+		a.elemProcessor(w, field, v.Index(i), key)
 	}
 	w.Visitor().CloseArray()
 }
 
-func (w *TypeWalker) newSliceProcessor(valType reflect.Type, array bool, key bool) ProcessorFunc {
+func (w *TypeWalker) newSliceProcessor(valType reflect.Type, array bool) ProcessorFunc {
 	elemType := valType.Elem()
 	if !array && elemType.Kind() == reflect.Uint8 {
 		return bytesProcessor
 	}
-	f := w.getProcessor(elemType, key)
+	f := w.getProcessor(elemType)
 	return sliceProcessor{elemProcessor: f}.process
 }
 
-func bytesProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitBytes(field, v, false)
+func bytesProcessor(w *TypeWalker, field *Field, v reflect.Value, key bool) {
+	w.Visitor().VisitBytes(field, v, key)
 }
