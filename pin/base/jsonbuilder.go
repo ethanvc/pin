@@ -6,6 +6,10 @@ type JsonBuilder struct {
 	Buf Buffer
 }
 
+func (j *JsonBuilder) Reset() {
+	j.Buf.Reset()
+}
+
 func (j *JsonBuilder) String() string {
 	return j.Buf.String()
 }
