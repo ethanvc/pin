@@ -54,14 +54,14 @@ type TypeVisitor interface {
 	CloseStruct()
 	OpenArray()
 	CloseArray()
-	VisitNil()
-	VisitBool(field *Field, v reflect.Value)
-	VisitInt64(field *Field, v reflect.Value)
-	VisitUint64(field *Field, v reflect.Value)
-	VisitFloat64(field *Field, v reflect.Value)
-	VisitString(field *Field, v reflect.Value)
-	VisitBytes(field *Field, v reflect.Value)
+	VisitInt64(field *Field, v reflect.Value, key bool)
+	VisitUint64(field *Field, v reflect.Value, key bool)
+	VisitString(field *Field, v reflect.Value, key bool)
+	VisitBytes(field *Field, v reflect.Value, key bool)
 	VisitField(field *Field, v reflect.Value)
+	OpenMap()
+	CloseMap()
+	VisitMapItem(field *Field)
 }
 
 type CustomVisitor interface {

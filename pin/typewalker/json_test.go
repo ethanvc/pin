@@ -6,10 +6,6 @@ import (
 	"testing"
 )
 
-func TestNil(t *testing.T) {
-	assert.Equal(t, base.StructToJsonStr(nil), ToLogJsonStr(nil))
-}
-
 func TestEmptyStruct(t *testing.T) {
 	assert.Equal(t, base.StructToJsonStr(struct{}{}), ToLogJsonStr(struct{}{}))
 }
@@ -64,4 +60,8 @@ func TestArrayType(t *testing.T) {
 	}
 	v := S{X: [...]int{8, 0}}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
+}
+
+func TestMapType(t *testing.T) {
+
 }

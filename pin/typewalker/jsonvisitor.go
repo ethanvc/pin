@@ -31,37 +31,35 @@ func (j *JsonVisitor) CloseArray() {
 	j.B.CloseArray()
 }
 
-func (j *JsonVisitor) VisitNil() {
-	j.B.WriteValueNull()
-}
-
-func (j *JsonVisitor) VisitBool(field *Field, v reflect.Value) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (j *JsonVisitor) VisitInt64(field *Field, v reflect.Value) {
+func (j *JsonVisitor) VisitInt64(field *Field, v reflect.Value, key bool) {
 	j.B.WriteValueInt64(v.Int())
 }
 
-func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value) {
+func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value, key bool) {
 	j.B.WriteValueUint64(v.Uint())
 }
 
-func (j *JsonVisitor) VisitFloat64(field *Field, v reflect.Value) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (j *JsonVisitor) VisitString(field *Field, v reflect.Value) {
+func (j *JsonVisitor) VisitString(field *Field, v reflect.Value, key bool) {
 	j.B.WriteValueString(v.String())
 }
 
-func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value) {
+func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value, key bool) {
 	j.B.WriteValueString(base64.StdEncoding.EncodeToString(v.Bytes()))
 }
 
 func (j *JsonVisitor) VisitField(field *Field, v reflect.Value) {
 	j.B.WriteKey(field.JsonKey)
 	field.Processor(j.w, field, v.FieldByIndex(field.StructField.Index))
+}
+
+func (j *JsonVisitor) OpenMap() {
+
+}
+
+func (j *JsonVisitor) CloseMap() {
+
+}
+
+func (j *JsonVisitor) VisitMapItem(field *Field) {
+
 }

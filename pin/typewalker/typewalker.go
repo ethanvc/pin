@@ -63,7 +63,6 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 }
 
 func nilProcess(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitNil()
 }
 
 func customVisitorProcess(w *TypeWalker, v reflect.Value) {
@@ -101,22 +100,18 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 }
 
 func stringProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitString(field, v)
-}
-
-func uintProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitUint64(field, v)
+	w.Visitor().VisitString(field, v, false)
 }
 
 func intProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitInt64(field, v)
+	w.Visitor().VisitInt64(field, v, false)
+}
+
+func uintProcessor(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().VisitUint64(field, v, false)
 }
 
 func dummyProcessor(walker *TypeWalker, field *Field, v reflect.Value) {
-}
-
-func mapProcessor(walker *TypeWalker, v reflect.Value) {
-
 }
 
 type structProcessor struct {
@@ -192,5 +187,5 @@ func (w *TypeWalker) newSliceProcessor(valType reflect.Type, array bool) Process
 }
 
 func bytesProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitBytes(field, v)
+	w.Visitor().VisitBytes(field, v, false)
 }
