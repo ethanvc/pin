@@ -91,9 +91,15 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 		return intProcessor{}.process
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 		return uintProcessor{}.process
+	case reflect.Float32, reflect.Float64:
+		return floatProcess
 	}
 
 	return dummyProcessor
+}
+
+func floatProcess(w *TypeWalker, field *Field, v reflect.Value, key bool) {
+	w.Visitor().VisitFloat(field, v, key)
 }
 
 func (w *TypeWalker) newMapProcessor(valType reflect.Type) ProcessorFunc {

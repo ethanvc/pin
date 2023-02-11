@@ -74,6 +74,13 @@ func (j *JsonBuilder) WriteValueUint64(v uint64) *JsonBuilder {
 	return j
 }
 
+func (j *JsonBuilder) WriteValueFloat(v float64) *JsonBuilder {
+	s := strconv.FormatFloat(v, 'f', -1, 64)
+	j.Buf.WriteString(s)
+	j.writeComma()
+	return j
+}
+
 func (j *JsonBuilder) WriteValueString(s string) *JsonBuilder {
 	j.Buf.WriteByte('"')
 	j.Buf.WriteString(s)

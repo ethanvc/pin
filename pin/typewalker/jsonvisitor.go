@@ -44,6 +44,10 @@ func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value, key bool) {
 	j.B.WriteValueUint64(v.Uint())
 }
 
+func (j *JsonVisitor) VisitFloat(field *Field, v reflect.Value, key bool) {
+	j.B.WriteValueFloat(v.Float())
+}
+
 func (j *JsonVisitor) VisitString(field *Field, v reflect.Value, key bool) {
 	if key {
 		j.B.WriteKey(v.String())

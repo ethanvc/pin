@@ -56,6 +56,7 @@ type TypeVisitor interface {
 	CloseArray()
 	VisitInt64(field *Field, v reflect.Value, key bool)
 	VisitUint64(field *Field, v reflect.Value, key bool)
+	VisitFloat(field *Field, v reflect.Value, key bool)
 	VisitString(field *Field, v reflect.Value, key bool)
 	VisitBytes(field *Field, v reflect.Value, key bool)
 	VisitField(field *Field, v reflect.Value)

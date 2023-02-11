@@ -75,3 +75,15 @@ func TestMapTypeDigitKey(t *testing.T) {
 	}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 }
+
+func TestFloatType(t *testing.T) {
+	type S struct {
+		X float32
+		Y float64
+	}
+	v := S{
+		X: 0.3,
+		Y: 33,
+	}
+	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
+}

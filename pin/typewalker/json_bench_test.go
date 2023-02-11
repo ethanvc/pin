@@ -48,7 +48,7 @@ func BenchmarkSmallStruct(b *testing.B) {
 					X: 3,
 					Y: "hello-world",
 				}
-				json.Marshal(v)
+				jsonx.Marshal(v)
 			}
 		})
 	})
