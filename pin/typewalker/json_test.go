@@ -63,5 +63,9 @@ func TestArrayType(t *testing.T) {
 }
 
 func TestMapType(t *testing.T) {
+	v := map[string]int{
+		"hello": 3,
+	}
+	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
 
 }

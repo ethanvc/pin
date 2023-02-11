@@ -36,10 +36,10 @@ func (w *TypeWalker) getProcessorByValue(v reflect.Value) ProcessorFunc {
 		return nilProcess
 	}
 	valType := v.Type()
-	return w.getProcessor(valType)
+	return w.getProcessor(valType, false)
 }
 
-func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
+func (w *TypeWalker) getProcessor(valType reflect.Type, key bool) ProcessorFunc {
 	if f := sCache.Find(w.visitorType, valType); f != nil {
 		return f
 	}
@@ -56,7 +56,7 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 		return f
 	}
 
-	f = w.getProcessorSlow(valType)
+	f = w.getProcessorSlow(valType, key)
 	wg.Done()
 	sCache.Store(w.visitorType, valType, f)
 	return f
@@ -65,11 +65,7 @@ func (w *TypeWalker) getProcessor(valType reflect.Type) ProcessorFunc {
 func nilProcess(w *TypeWalker, field *Field, v reflect.Value) {
 }
 
-func customVisitorProcess(w *TypeWalker, v reflect.Value) {
-
-}
-
-func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
+func (w *TypeWalker) getProcessorSlow(valType reflect.Type, key bool) ProcessorFunc {
 	if implementCustomVisitor(valType) {
 
 	}
@@ -81,34 +77,60 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
 		return dummyProcessor
 	case reflect.Interface:
 	case reflect.Map:
+		return w.newMapProcessor(valType)
 	case reflect.Pointer:
 	case reflect.Slice:
-		return w.newSliceProcessor(valType, false)
+		return w.newSliceProcessor(valType, false, key)
 	case reflect.Array:
-		return w.newSliceProcessor(valType, true)
+		return w.newSliceProcessor(valType, true, key)
 	case reflect.String:
-		return stringProcessor
+		return stringProcessor{key: key}.process
 	case reflect.Struct:
 		return w.newStructProcessor(valType)
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
-		return intProcessor
+		return intProcessor{key: key}.process
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
-		return uintProcessor
+		return uintProcessor{key: key}.process
 	}
 
 	return dummyProcessor
 }
 
-func stringProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitString(field, v, false)
+func (w *TypeWalker) newMapProcessor(valType reflect.Type) ProcessorFunc {
+	return dummyProcessor
 }
 
-func intProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitInt64(field, v, false)
+type mapProcessor struct {
+	keyProcesor  ProcessorFunc
+	valProcessor ProcessorFunc
 }
 
-func uintProcessor(w *TypeWalker, field *Field, v reflect.Value) {
-	w.Visitor().VisitUint64(field, v, false)
+func (p mapProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
+
+}
+
+type stringProcessor struct {
+	key bool
+}
+
+func (p stringProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().VisitString(field, v, p.key)
+}
+
+type intProcessor struct {
+	key bool
+}
+
+func (p intProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().VisitInt64(field, v, p.key)
+}
+
+type uintProcessor struct {
+	key bool
+}
+
+func (p uintProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
+	w.Visitor().VisitUint64(field, v, p.key)
 }
 
 func dummyProcessor(walker *TypeWalker, field *Field, v reflect.Value) {
@@ -150,7 +172,7 @@ func (w *TypeWalker) newStructProcessor(valType reflect.Type) ProcessorFunc {
 			continue
 		}
 		newF := newField(field)
-		newF.Processor = w.getProcessor(field.Type)
+		newF.Processor = w.getProcessor(field.Type, false)
 		p.fields = append(p.fields, newF)
 		rootField = field
 	}
@@ -177,12 +199,12 @@ func (a sliceProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
 	w.Visitor().CloseArray()
 }
 
-func (w *TypeWalker) newSliceProcessor(valType reflect.Type, array bool) ProcessorFunc {
+func (w *TypeWalker) newSliceProcessor(valType reflect.Type, array bool, key bool) ProcessorFunc {
 	elemType := valType.Elem()
 	if !array && elemType.Kind() == reflect.Uint8 {
 		return bytesProcessor
 	}
-	f := w.getProcessor(elemType)
+	f := w.getProcessor(elemType, key)
 	return sliceProcessor{elemProcessor: f}.process
 }
 
