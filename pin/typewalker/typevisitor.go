@@ -61,7 +61,6 @@ type TypeVisitor interface {
 	VisitField(field *Field, v reflect.Value)
 	OpenMap()
 	CloseMap()
-	VisitMapItem(field *Field)
 }
 
 type CustomVisitor interface {

@@ -77,7 +77,7 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type, key bool) ProcessorF
 		return dummyProcessor
 	case reflect.Interface:
 	case reflect.Map:
-		return w.newMapProcessor(valType)
+		return w.newMapProcessor(valType, key)
 	case reflect.Pointer:
 	case reflect.Slice:
 		return w.newSliceProcessor(valType, false, key)
@@ -96,17 +96,30 @@ func (w *TypeWalker) getProcessorSlow(valType reflect.Type, key bool) ProcessorF
 	return dummyProcessor
 }
 
-func (w *TypeWalker) newMapProcessor(valType reflect.Type) ProcessorFunc {
-	return dummyProcessor
+func (w *TypeWalker) newMapProcessor(valType reflect.Type, key bool) ProcessorFunc {
+	p := mapProcessor{}
+	p.keyProcessor = w.getProcessor(valType.Key(), true)
+	p.valProcessor = w.getProcessor(valType.Elem(), false)
+	p.key = key
+	return p.process
 }
 
 type mapProcessor struct {
-	keyProcesor  ProcessorFunc
+	keyProcessor ProcessorFunc
 	valProcessor ProcessorFunc
+	key          bool
 }
 
 func (p mapProcessor) process(w *TypeWalker, field *Field, v reflect.Value) {
-
+	w.Visitor().OpenMap()
+	iter := v.MapRange()
+	for iter.Next() {
+		key := iter.Key()
+		p.keyProcessor(w, field, key)
+		val := iter.Value()
+		p.valProcessor(w, field, val)
+	}
+	w.Visitor().CloseMap()
 }
 
 type stringProcessor struct {

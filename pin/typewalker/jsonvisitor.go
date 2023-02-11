@@ -40,7 +40,11 @@ func (j *JsonVisitor) VisitUint64(field *Field, v reflect.Value, key bool) {
 }
 
 func (j *JsonVisitor) VisitString(field *Field, v reflect.Value, key bool) {
-	j.B.WriteValueString(v.String())
+	if key {
+		j.B.WriteKey(v.String())
+	} else {
+		j.B.WriteValueString(v.String())
+	}
 }
 
 func (j *JsonVisitor) VisitBytes(field *Field, v reflect.Value, key bool) {
@@ -53,13 +57,10 @@ func (j *JsonVisitor) VisitField(field *Field, v reflect.Value) {
 }
 
 func (j *JsonVisitor) OpenMap() {
-
+	j.OpenStruct()
 }
 
 func (j *JsonVisitor) CloseMap() {
-
-}
-
-func (j *JsonVisitor) VisitMapItem(field *Field) {
+	j.CloseStruct()
 
 }
