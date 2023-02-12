@@ -74,8 +74,8 @@ func (j *JsonBuilder) WriteValueUint64(v uint64) *JsonBuilder {
 	return j
 }
 
-func (j *JsonBuilder) WriteValueFloat(v float64) *JsonBuilder {
-	s := strconv.FormatFloat(v, 'f', -1, 64)
+func (j *JsonBuilder) WriteValueFloat(v float64, bitSize int) *JsonBuilder {
+	s := strconv.FormatFloat(v, 'f', -1, bitSize)
 	j.Buf.WriteString(s)
 	j.writeComma()
 	return j

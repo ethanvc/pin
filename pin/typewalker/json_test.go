@@ -78,7 +78,7 @@ func TestMapTypeDigitKey(t *testing.T) {
 
 func TestFloatType(t *testing.T) {
 	type S struct {
-		X float64
+		X float32
 		Y float64
 	}
 	v := S{
