@@ -3,6 +3,7 @@ package typewalker
 import (
 	"github.com/ethanvc/pin/pin/base"
 	"github.com/stretchr/testify/assert"
+	"reflect"
 	"testing"
 )
 
@@ -86,4 +87,16 @@ func TestFloatType(t *testing.T) {
 		Y: 33,
 	}
 	assert.Equal(t, base.StructToJsonStr(v), ToLogJsonStr(v))
+}
+
+type TestJsonExtend struct {
+}
+
+func (e TestJsonExtend) JsonVisit(w *TypeWalker, j *JsonVisitor, field *Field, v reflect.Value, key bool) {
+	j.B.WriteValueString("test")
+}
+
+func TestJsonExtendCase(t *testing.T) {
+	var v TestJsonExtend
+	assert.Equal(t, `"test"`, ToLogJsonStr(v))
 }

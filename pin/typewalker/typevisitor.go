@@ -45,9 +45,6 @@ func (f *Field) AncestorOf(otherF *Field) bool {
 	return true
 }
 
-type MapKey struct {
-}
-
 type TypeVisitor interface {
 	SetWalker(w *TypeWalker)
 	OpenStruct()
@@ -62,14 +59,5 @@ type TypeVisitor interface {
 	VisitField(field *Field, v reflect.Value)
 	OpenMap()
 	CloseMap()
-}
-
-type CustomVisitor interface {
-	Visit(w *TypeWalker) bool
-}
-
-var customVisitorType = reflect.TypeOf((*CustomVisitor)(nil)).Elem()
-
-func implementCustomVisitor(t reflect.Type) bool {
-	return t.Implements(customVisitorType)
+	GetProcessor(valType reflect.Type) ProcessorFunc
 }

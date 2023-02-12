@@ -66,8 +66,8 @@ func nilProcess(w *TypeWalker, field *Field, v reflect.Value, key bool) {
 }
 
 func (w *TypeWalker) getProcessorSlow(valType reflect.Type) ProcessorFunc {
-	if implementCustomVisitor(valType) {
-
+	if f := w.Visitor().GetProcessor(valType); f != nil {
+		return f
 	}
 
 	switch valType.Kind() {

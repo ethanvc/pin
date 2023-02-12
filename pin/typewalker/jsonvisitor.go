@@ -75,5 +75,34 @@ func (j *JsonVisitor) OpenMap() {
 
 func (j *JsonVisitor) CloseMap() {
 	j.CloseStruct()
+}
 
+func (j *JsonVisitor) GetProcessor(valType reflect.Type) ProcessorFunc {
+	if implementJsonVisitorExtender(valType) {
+		return jsonVisitorExtendProcess
+	}
+	return nil
+}
+
+func (j *JsonVisitor) extendProcess(field *Field, v reflect.Value, key bool) {
+	vv, ok := v.Interface().(JsonVisitorExtender)
+	if !ok {
+		j.B.WriteValueNull()
+		return
+	}
+	vv.JsonVisit(j.w, j, field, v, key)
+}
+
+func jsonVisitorExtendProcess(w *TypeWalker, field *Field, v reflect.Value, key bool) {
+	w.Visitor().(*JsonVisitor).extendProcess(field, v, key)
+}
+
+type JsonVisitorExtender interface {
+	JsonVisit(w *TypeWalker, j *JsonVisitor, field *Field, v reflect.Value, key bool)
+}
+
+var customVisitorType = reflect.TypeOf((*JsonVisitorExtender)(nil)).Elem()
+
+func implementJsonVisitorExtender(t reflect.Type) bool {
+	return t.Implements(customVisitorType)
 }
