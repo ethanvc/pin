@@ -11,5 +11,6 @@ require (
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	go.uber.org/goleak v1.2.0 // indirect
+	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
