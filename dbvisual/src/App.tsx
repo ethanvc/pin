@@ -1,26 +1,34 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import cssvars from './css';
+import styled from 'styled-components';
 
-function App() {
+export default function App() {
+  const App = styled.div`
+    box-sizing: border-box;
+    background-color: rgb(21, 21, 21);
+    & *{
+      box-sizing: border-box;
+    }
+  `;
+  const Top = styled.div`
+    border-bottom: 1px solid rgb(52, 52, 52);
+    height: 48px;
+  `;
+  const Body = styled.div`
+    display: flex;
+  `;
+  const LeftPanel = styled.div`
+    height: 48px;
+    width: 100px;
+    border-right: 1px solid rgb(52, 52, 52);
+  `;
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <App>
+      <Top />
+      <Body>
+        <LeftPanel />
+        <div />
+      </Body>
+    </App>
   );
 }
-
-export default App;
