@@ -1,6 +1,6 @@
 import React from 'react';
-import cssvars from './css';
 import styled from 'styled-components';
+import Header from './Header';
 
 export default function App() {
   const App = styled.div`
@@ -24,10 +24,10 @@ export default function App() {
   `;
   return (
     <App>
-      <Top />
+      <Top><Header/></Top>
       <Body>
-        <LeftPanel />
-        <div />
+        <LeftPanel/>
+        <div/>
       </Body>
     </App>
   );
