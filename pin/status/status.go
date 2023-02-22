@@ -1,11 +1,19 @@
 package status
 
-import "github.com/ethanvc/pin/pin/status/code"
+import "github.com/ethanvc/pin/pin/status/codes"
 
 type Status struct {
-	codeVal     code.Code
+	codeVal     codes.Code
 	eventVal    string
 	subEventVal string
 	msgVal      string
 	pcVal       uintptr
+}
+
+func NewStatus(code codes.Code, event string) *Status {
+	s := &Status{
+		codeVal:  code,
+		eventVal: event,
+	}
+	return s
 }

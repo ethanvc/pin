@@ -3,6 +3,7 @@ package pin
 import (
 	"context"
 	"github.com/ethanvc/pin/pin/status"
+	"github.com/ethanvc/pin/pin/status/codes"
 	"time"
 )
 
@@ -36,11 +37,15 @@ func RequestFromContext(c context.Context) *Request {
 }
 
 func (this *Request) Next() *status.Status {
-	if this.interceptorIndex == len(this.Interceptors) {
-		return this.callHandler()
-	} else {
+	intLen := len(this.Interceptors)
+	if this.interceptorIndex < intLen {
 		this.interceptorIndex++
 		return this.Interceptors[this.interceptorIndex-1](this)
+	} else if this.interceptorIndex == intLen {
+		this.interceptorIndex++
+		return this.callHandler()
+	} else {
+		return status.NewStatus(codes.Internal, "CallNextInWrongPlace")
 	}
 }
 
