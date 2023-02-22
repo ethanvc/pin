@@ -50,8 +50,7 @@ func (this *Request) Next() *status.Status {
 }
 
 func (this *Request) callHandler() *status.Status {
-	if this.Handler.DirectFunc != nil {
-		return this.Handler.DirectFunc()
-	}
-	return nil
+	resp, status := this.Handler.Call(this.C, this.Req)
+	this.Resp = resp
+	return status
 }
