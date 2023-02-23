@@ -14,6 +14,9 @@ type Request struct {
 	C                context.Context
 	Req              interface{}
 	Resp             interface{}
+	ReqBytes         []byte
+	RespBytes        []byte
+	Method           string
 	Status           *status.Status
 	Handler          Handler
 	ProtocolRequest  ProtocolRequest
