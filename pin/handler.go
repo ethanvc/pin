@@ -9,16 +9,21 @@ import (
 // Handler represent follow function.
 // func(context.Context, *ReqType) (*TypeResp, *status.Status)
 type Handler struct {
-	obj    reflect.Value
-	method reflect.Method
+	methodVal reflect.Value
+}
+
+func NewHandler(v any) Handler {
+	vf := reflect.ValueOf(v)
+	return Handler{
+		methodVal: vf,
+	}
 }
 
 func (this Handler) Call(c context.Context, req interface{}) (interface{}, *status.Status) {
 	param := [...]reflect.Value{
-		this.obj,
 		reflect.ValueOf(c),
 		reflect.ValueOf(req),
 	}
-	reflectResp := this.method.Func.Call(param[:])
-	return reflectResp[0].Interface(), reflectResp[0].Interface().(*status.Status)
+	reflectResp := this.methodVal.Call(param[:])
+	return reflectResp[0].Interface(), reflectResp[1].Interface().(*status.Status)
 }

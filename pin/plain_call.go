@@ -31,6 +31,8 @@ func (this *PlainCall[ReqType, RespType]) Call(c context.Context, req *ReqType) 
 
 func (this *PlainCall[ReqType, RespType]) InitializeRequest(req *Request) *status.Status {
 	req.Req = this.req
+	req.Method = this.method
+	req.Handler = NewHandler(this.f)
 	return nil
 }
 
