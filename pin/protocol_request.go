@@ -9,5 +9,5 @@ type ProtocolRequest interface {
 	InitializeRequest(req *Request) *status.Status
 	FinalizeRequest(req *Request) *status.Status
 	ProtocolContext() context.Context
-	ProtocolObject() interface{}
+	ProtocolObject() any
 }

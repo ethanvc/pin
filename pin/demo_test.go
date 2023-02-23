@@ -3,6 +3,7 @@ package pin
 import (
 	"context"
 	"github.com/ethanvc/pin/pin/status"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -24,9 +25,11 @@ func (this *TestController) Get(c context.Context, req *TestReq) (*TestResp, *st
 }
 
 func TestDemo(t *testing.T) {
-	var s Server
-	req := CreatePlainCall("Get", func() *status.Status {
-		return nil
-	})
-	s.ProcessRequest(req)
+	var controller TestController
+	req := &TestReq{
+		Name: "hello",
+	}
+	resp, status := CreatePlainCall("ControllerGet", controller.Get).Call(context.Background(), req)
+	assert.Nil(t, status)
+	assert.Equal(t, req.Name, resp.Name)
 }
