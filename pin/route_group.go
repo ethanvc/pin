@@ -22,14 +22,14 @@ func (this *RouteGroup) Group(relativePath string, interceptorFunc ...Intercepto
 }
 
 func (this *RouteGroup) GET(relativePath string, handler any, interceptorFunc ...InterceptorFunc) {
-	this.handle(http.MethodGet, relativePath, handler, interceptorFunc...)
+	this.Handle(http.MethodGet, relativePath, handler, interceptorFunc...)
 }
 
 func (this *RouteGroup) POST(relativePath string, handler any, interceptorFunc ...InterceptorFunc) {
-	this.handle(http.MethodGet, relativePath, handler, interceptorFunc...)
+	this.Handle(http.MethodGet, relativePath, handler, interceptorFunc...)
 }
 
-func (this *RouteGroup) handle(method string, relativePath string, handler any, interceptorFunc ...InterceptorFunc) *RouteGroup {
+func (this *RouteGroup) Handle(method string, relativePath string, handler any, interceptorFunc ...InterceptorFunc) *RouteGroup {
 	child := &RouteGroup{
 		parentGroup:     this,
 		method:          method,
