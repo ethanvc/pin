@@ -1,24 +1,42 @@
 package pin
 
 import "net/http"
+import pathf "path"
 
 type RouteGroup struct {
 	parentGroup     *RouteGroup
 	method          string
-	relativePath    string
+	path            string
 	childGroups     []*RouteGroup
 	interceptorFunc []InterceptorFunc
 	handler         any
 }
 
-func (this *RouteGroup) Group(relativePath string, interceptorFunc ...InterceptorFunc) *RouteGroup {
+func (this *RouteGroup) Group(path string, interceptorFunc ...InterceptorFunc) *RouteGroup {
 	child := &RouteGroup{
 		parentGroup:     this,
-		relativePath:    relativePath,
-		interceptorFunc: interceptorFunc,
+		path:            this.mergeParentPath(path),
+		interceptorFunc: this.mergeParentInterceptors(interceptorFunc),
 	}
 	this.childGroups = append(this.childGroups, child)
 	return child
+}
+
+func (this *RouteGroup) mergeParentPath(path string) string {
+	if this.parentGroup != nil {
+		return pathf.Join(this.parentGroup.path, path)
+	} else {
+		return path
+	}
+}
+
+func (this *RouteGroup) mergeParentInterceptors(interceptorFunc []InterceptorFunc) []InterceptorFunc {
+	if this.parentGroup != nil {
+		tmp := append([]InterceptorFunc{}, this.parentGroup.interceptorFunc...)
+		return append(tmp, interceptorFunc...)
+	} else {
+		return interceptorFunc
+	}
 }
 
 func (this *RouteGroup) GET(relativePath string, handler any, interceptorFunc ...InterceptorFunc) {
@@ -33,7 +51,7 @@ func (this *RouteGroup) Handle(method string, relativePath string, handler any, 
 	child := &RouteGroup{
 		parentGroup:     this,
 		method:          method,
-		relativePath:    relativePath,
+		path:            relativePath,
 		interceptorFunc: interceptorFunc,
 		handler:         handler,
 	}
