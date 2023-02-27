@@ -1,13 +1,16 @@
 package pin
 
-import "net/http"
+import (
+	"github.com/ethanvc/pin/pin/status"
+	"net/http"
+)
 import pathf "path"
 
 type RouteGroup struct {
 	parentGroup     *RouteGroup
 	method          string
 	path            string
-	childGroups     []*RouteGroup
+	children        []*RouteGroup
 	interceptorFunc []InterceptorFunc
 	handler         any
 }
@@ -18,7 +21,7 @@ func (this *RouteGroup) Group(path string, interceptorFunc ...InterceptorFunc) *
 		path:            this.mergeParentPath(path),
 		interceptorFunc: this.mergeParentInterceptors(interceptorFunc),
 	}
-	this.childGroups = append(this.childGroups, child)
+	this.children = append(this.children, child)
 	return child
 }
 
@@ -55,6 +58,29 @@ func (this *RouteGroup) Handle(method string, relativePath string, handler any, 
 		interceptorFunc: interceptorFunc,
 		handler:         handler,
 	}
-	this.childGroups = append(this.childGroups, child)
+	this.children = append(this.children, child)
 	return child
+}
+
+func (this *RouteGroup) BuildRouter() (*HttpRouter, *status.Status) {
+	r := &HttpRouter{}
+	status := this.buildRouter(r)
+	if status.NotOk() {
+		return nil, status
+	}
+	return r, nil
+}
+
+func (this *RouteGroup) buildRouter(r *HttpRouter) *status.Status {
+	if len(this.method) == 0 {
+		for _, child := range this.children {
+			status := child.buildRouter(r)
+			if status.NotOk() {
+				return status
+			}
+		}
+	} else {
+
+	}
+	return nil
 }

@@ -17,3 +17,11 @@ func NewStatus(code codes.Code, event string) *Status {
 	}
 	return s
 }
+
+func (this *Status) NotOk() bool {
+	if this == nil {
+		return false
+	} else {
+		return this.codeVal != codes.OK
+	}
+}
