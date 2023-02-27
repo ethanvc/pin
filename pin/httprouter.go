@@ -3,7 +3,7 @@ package pin
 import "github.com/ethanvc/pin/pin/status"
 
 type HttpRouter struct {
-	children []routeNode
+	children []*routeNode
 }
 
 type routeNode struct {
