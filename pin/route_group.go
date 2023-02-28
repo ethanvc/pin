@@ -62,8 +62,8 @@ func (this *RouteGroup) Handle(method string, relativePath string, handler any, 
 	return child
 }
 
-func (this *RouteGroup) BuildRouter() (*HttpRouter, *status.Status) {
-	r := &HttpRouter{}
+func (this *RouteGroup) BuildRouter() (*Router, *status.Status) {
+	r := &Router{}
 	status := this.buildRouter(r)
 	if status.NotOk() {
 		return nil, status
@@ -71,7 +71,7 @@ func (this *RouteGroup) BuildRouter() (*HttpRouter, *status.Status) {
 	return r, nil
 }
 
-func (this *RouteGroup) buildRouter(r *HttpRouter) *status.Status {
+func (this *RouteGroup) buildRouter(r *Router) *status.Status {
 	if len(this.method) == 0 {
 		for _, child := range this.children {
 			status := child.buildRouter(r)
@@ -79,8 +79,12 @@ func (this *RouteGroup) buildRouter(r *HttpRouter) *status.Status {
 				return status
 			}
 		}
+		return nil
 	} else {
-
+		status := r.routeNode.add(this.method, this.path, this.handler, this.interceptorFunc)
+		if status.NotOk() {
+			return status
+		}
+		return nil
 	}
-	return nil
 }

@@ -2,8 +2,8 @@ package pin
 
 import "github.com/ethanvc/pin/pin/status"
 
-type HttpRouter struct {
-	children []*routeNode
+type Router struct {
+	routeNode routeNode
 }
 
 type routeNode struct {
@@ -25,10 +25,22 @@ type Param struct {
 // It is therefore safe to read values by the index.
 type Params []Param
 
-func (this *HttpRouter) add(method string, urlPath string, handler any, interceptorFunc []InterceptorFunc) *status.Status {
+func (this *routeNode) add(method string, urlPath string, handler any, interceptorFunc []InterceptorFunc) *status.Status {
+	if len(this.children) == 0 {
+		this.children = append(this.children, routeNode{
+			commonPath:      urlPath,
+			method:          method,
+			interceptorFunc: interceptorFunc,
+		})
+		return nil
+	}
 	return nil
 }
 
-func (this *HttpRouter) Find(method string, urlPath string, params *Params) (*routeNode, *status.Status) {
+func (this *routeNode) addChild(method string, urlPath string, handler any, interceptorFunc []InterceptorFunc) *status.Status {
+	return nil
+}
+
+func (this *routeNode) Find(method string, urlPath string, params *Params) (*routeNode, *status.Status) {
 	return nil, nil
 }
