@@ -6,6 +6,10 @@ type Router struct {
 	routeNode routeNode
 }
 
+func (this *Router) AddRoute(method string, urlPath string, handler any, interceptorFunc []InterceptorFunc) *status.Status {
+	return nil
+}
+
 type routeNode struct {
 	commonPath      string
 	method          string
