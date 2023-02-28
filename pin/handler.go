@@ -10,22 +10,31 @@ import (
 // Handler represent follow function.
 // func(context.Context, *ReqType) (*TypeResp, *status.Status)
 type Handler struct {
+	structName string
 	methodName string
 	methodVal  reflect.Value
 }
 
 func NewHandlers(v any) []Handler {
-	vf := reflect.ValueOf(v)
-	if vf.Kind() == reflect.Func {
+	vv := reflect.ValueOf(v)
+	if vv.Kind() == reflect.Func {
 		return []Handler{
-			{methodVal: vf},
+			{methodVal: vv},
 		}
-	} else if vf.Kind() == reflect.Pointer && vf.Elem().Kind() == reflect.Struct {
+	} else if vv.Kind() == reflect.Pointer && vv.Elem().Kind() == reflect.Struct {
 		var result []Handler
-		for i := 0; i < vf.NumMethod(); i++ {
-			method := vf.Method(i)
+		vt := vv.Type()
+		structName := vt.Elem().Name()
+		for i := 0; i < vv.NumMethod(); i++ {
+			method := vv.Method(i)
+			if !IsValidHandler(method) {
+				continue
+			}
+			methodT := vt.Method(i)
 			result = append(result, Handler{
-				methodVal: method,
+				structName: structName,
+				methodName: methodT.Name,
+				methodVal:  method,
 			})
 		}
 		return result
@@ -34,7 +43,26 @@ func NewHandlers(v any) []Handler {
 	}
 }
 
+var contextType = reflect.TypeOf((*context.Context)(nil)).Elem()
+var statusPointerType = reflect.TypeOf((*status.Status)(nil))
+
 func IsValidHandler(method reflect.Value) bool {
+	t := method.Type()
+	if t.NumIn() != 2 || t.NumOut() != 2 {
+		return false
+	}
+	if t.In(0) != contextType {
+		return false
+	}
+	if t.In(1).Kind() != reflect.Pointer {
+		return false
+	}
+	if t.Out(0).Kind() != reflect.Pointer {
+		return false
+	}
+	if t.Out(1) != statusPointerType {
+		return false
+	}
 	return true
 }
 

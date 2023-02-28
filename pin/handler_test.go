@@ -14,8 +14,20 @@ func (*testHandlerStruct) Get(c context.Context, req *testHandlerStruct) (*testH
 	return nil, nil
 }
 
+func (*testHandlerStruct) Create(c context.Context, req *testHandlerStruct) (*testHandlerStruct, *status.Status) {
+	return nil, nil
+}
+
+func (*testHandlerStruct) get(c context.Context, req *testHandlerStruct) (*testHandlerStruct, *status.Status) {
+	return nil, nil
+}
+
+func (*testHandlerStruct) List(c context.Context, req testHandlerStruct) (*testHandlerStruct, *status.Status) {
+	return nil, nil
+}
+
 func TestNewHandlers(t *testing.T) {
 	v := &testHandlerStruct{}
 	handlers := NewHandlers(v)
-	assert.Equal(t, 1, len(handlers))
+	assert.Equal(t, 2, len(handlers))
 }
