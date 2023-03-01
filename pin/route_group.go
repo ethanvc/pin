@@ -6,6 +6,8 @@ import (
 )
 import pathf "path"
 
+const HttpMethodAny = "Any"
+
 type RouteGroup struct {
 	parentGroup     *RouteGroup
 	method          string
@@ -66,25 +68,24 @@ func (this *RouteGroup) BuildRouter() (*Router, *status.Status) {
 	r := &Router{}
 	status := this.buildRouter(r)
 	if status.NotOk() {
-		return nil, status
+		return r, status
 	}
 	return r, nil
 }
 
 func (this *RouteGroup) buildRouter(r *Router) *status.Status {
-	if len(this.method) == 0 {
-		for _, child := range this.children {
-			status := child.buildRouter(r)
-			if status.NotOk() {
-				return status
-			}
-		}
-		return nil
-	} else {
-		status := r.routeNode.add(this.method, this.path, this.handler, this.interceptorFunc)
+	if len(this.method) > 0 {
+		status := r.AddRoute(this.method, this.path, this.handler, this.interceptorFunc)
 		if status.NotOk() {
 			return status
 		}
-		return nil
 	}
+
+	for _, child := range this.children {
+		status := child.buildRouter(r)
+		if status.NotOk() {
+			return status
+		}
+	}
+	return nil
 }
