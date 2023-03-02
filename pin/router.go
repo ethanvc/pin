@@ -1,6 +1,7 @@
 package pin
 
 import (
+	"github.com/ethanvc/pin/pin/base"
 	"github.com/ethanvc/pin/pin/status"
 	"github.com/ethanvc/pin/pin/status/codes"
 	"github.com/iancoleman/strcase"
@@ -100,6 +101,11 @@ func (this *routeNode) add(part string, handler methodHandler) *status.Status {
 		this.methodHandlers = append(this.methodHandlers, handler)
 		return nil
 	}
+
+	if base.In(this.part[0], '*', ':') {
+		return status.NewStatus(codes.Internal, "WildcardDuplicate")
+	}
+
 	if commL == len(this.part) {
 		for i := 0; i < len(this.children); i++ {
 			commL := commLen(this.children[i].part, part)
