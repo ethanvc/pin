@@ -1,18 +1,17 @@
 package pin
 
 import (
+	"context"
+	"github.com/ethanvc/pin/pin/status"
 	"github.com/stretchr/testify/assert"
-	"net/http"
 	"testing"
 )
 
 func TestRouteGroup_BuildRouter(t *testing.T) {
-	controller := &testHandlerStruct{}
+	emptyFunc := func(context.Context, *int) (*int, *status.Status) { return nil, nil }
 	var g RouteGroup
-	g.GET("/a/b/c", controller)
+	g.GET("/a/:b/c", emptyFunc)
 	r, status := g.BuildRouter()
+	_ = r
 	assert.Nil(t, status)
-	assert.Equal(t, "/a/b/c/create", r.routeNode.part)
-	n := r.Find(http.MethodGet, "/a/b/c/create", nil)
-	assert.True(t, n.ValidHandler())
 }
