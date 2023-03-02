@@ -40,14 +40,25 @@ type methodHandler struct {
 	handler         Handler
 }
 
+type methodHandlers []methodHandler
+
+func (this methodHandlers) Find(method string) (methodHandler, bool) {
+	for _, h := range this {
+		if h.method == HttpMethodAny || h.method == method {
+			return h, true
+		}
+	}
+	return methodHandler{}, false
+}
+
 type routeNode struct {
 	part     string
 	children []routeNode
 
-	methodHandlers []methodHandler
+	methodHandlers methodHandlers
 }
 
-func findCommLen(s1, s2 string) int {
+func commLen(s1, s2 string) int {
 	l := len(s1)
 	if len(s2) < l {
 		l = len(s2)
@@ -78,9 +89,47 @@ func (this *routeNode) add(part string, handler methodHandler) *status.Status {
 		this.part = part
 		this.methodHandlers = []methodHandler{handler}
 		return this.initNewNode()
-	} else {
+	}
+
+	commL := commLen(part, this.part)
+	part = part[commL:]
+	if len(part) == 0 {
+		if _, ok := this.methodHandlers.Find(handler.method); ok {
+			return status.NewStatus(codes.Internal, "RouteConflict")
+		}
+		this.methodHandlers = append(this.methodHandlers, handler)
 		return nil
 	}
+	if commL == len(this.part) {
+		for i := 0; i < len(this.children); i++ {
+			commL := commLen(this.children[i].part, part)
+			if commL > 0 {
+				return this.children[i].add(part, handler)
+			}
+		}
+		this.children = append(this.children, routeNode{
+			part:           part,
+			methodHandlers: []methodHandler{handler},
+		})
+		return this.children[len(this.children)-1].initNewNode()
+	}
+
+	newRoot := routeNode{
+		part: this.part[0:commL],
+	}
+	oldChild := *this
+	oldChild.part = this.part[commL:]
+	newChild := routeNode{
+		part:           part,
+		methodHandlers: methodHandlers{handler},
+	}
+	status := newChild.initNewNode()
+	if status.NotOk() {
+		return status
+	}
+	newRoot.children = append(newRoot.children, oldChild, newChild)
+	*this = newRoot
+	return nil
 }
 
 func (this *routeNode) initNewNode() *status.Status {
