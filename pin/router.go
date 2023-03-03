@@ -34,6 +34,10 @@ func (this *Router) AddRoute(method string, patternPath string, handler any,
 	return nil
 }
 
+func (this *Router) Find(method, urlPath string, params *Params) HttpHandler {
+	return HttpHandler{}
+}
+
 type HttpHandler struct {
 	method          string
 	PatternPath     string
@@ -102,7 +106,7 @@ func (this *routeNode) add(part string, handler HttpHandler) *status.Status {
 		return nil
 	}
 
-	if base.In(this.part[0], '*', ':') && part[0] != '/' {
+	if this.wildcardNode() && part[0] != '/' {
 		return status.NewStatus(codes.Internal, "WildcardDuplicate")
 	}
 
@@ -173,4 +177,66 @@ func (this *routeNode) splitPart(sep int) *status.Status {
 	child.part = child.part[sep:]
 	this.children = append(this.children, child)
 	return this.children[0].initNewNode()
+}
+
+func (this *routeNode) Find(method, part string, params *Params) HttpHandler {
+	if this.part[0] == '*' {
+		if len(this.httpHandlers) == 0 {
+			return HttpHandler{}
+		}
+		if h, ok := this.httpHandlers.Find(method); ok {
+			*params = append(*params, Param{
+				Key:   this.part[1:],
+				Value: part,
+			})
+			return h
+		}
+		return HttpHandler{}
+	}
+	if this.part[0] == ':' {
+		slashIndex := strings.IndexByte(part, '/')
+		if slashIndex == -1 {
+			if h, ok := this.httpHandlers.Find(method); ok {
+				*params = append(*params, Param{
+					Key:   this.part[1:],
+					Value: part,
+				})
+				return h
+			}
+			return HttpHandler{}
+		}
+		*params = append(*params, Param{
+			Key:   this.part[1:],
+			Value: part[0:slashIndex],
+		})
+		part = part[slashIndex:]
+		return this.findInChildren(method, part, params)
+	}
+
+	if !strings.HasPrefix(part, this.part) {
+		return HttpHandler{}
+	}
+	part = part[len(this.part):]
+	return this.findInChildren(method, part, params)
+}
+
+func (this *routeNode) findInChildren(method, part string, params *Params) HttpHandler {
+	for i := 0; i < len(this.children); i++ {
+		if this.children[i].canStepIn(part) {
+			return this.children[i].Find(method, part, params)
+		}
+	}
+	return HttpHandler{}
+}
+
+func (this *routeNode) wildcardNode() bool {
+	return base.In(this.part[0], '*', ':')
+}
+
+func (this *routeNode) canStepIn(part string) bool {
+	if this.wildcardNode() || strings.HasPrefix(part, this.part) {
+		return true
+	} else {
+		return false
+	}
 }
