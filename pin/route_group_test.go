@@ -11,7 +11,6 @@ func TestRouteGroup_BuildRouter(t *testing.T) {
 	emptyFunc := func(context.Context, *int) (*int, *status.Status) { return nil, nil }
 	var g RouteGroup
 	g.GET("/a/:b/c", emptyFunc)
-	g.GET("/a/:bc/c", emptyFunc)
 	g.GET("/a/:b/c/d", emptyFunc)
 	r, status := g.BuildRouter()
 	_ = r

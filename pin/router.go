@@ -102,7 +102,7 @@ func (this *routeNode) add(part string, handler HttpHandler) *status.Status {
 		return nil
 	}
 
-	if base.In(this.part[0], '*', ':') {
+	if base.In(this.part[0], '*', ':') && part[0] != '/' {
 		return status.NewStatus(codes.Internal, "WildcardDuplicate")
 	}
 
