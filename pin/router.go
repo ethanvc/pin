@@ -21,7 +21,7 @@ func (this *Router) AddRoute(method string, patternPath string, handler any,
 		if len(h.methodName) > 0 {
 			realPath = path.Join(realPath, strcase.ToKebab(h.methodName))
 		}
-		status := this.routeNode.add(realPath, methodHandler{
+		status := this.routeNode.add(realPath, HttpHandler{
 			method:          method,
 			PatternPath:     patternPath,
 			handler:         h,
@@ -34,29 +34,29 @@ func (this *Router) AddRoute(method string, patternPath string, handler any,
 	return nil
 }
 
-type methodHandler struct {
+type HttpHandler struct {
 	method          string
 	PatternPath     string
 	interceptorFunc []InterceptorFunc
 	handler         Handler
 }
 
-type methodHandlers []methodHandler
+type httpHandlers []HttpHandler
 
-func (this methodHandlers) Find(method string) (methodHandler, bool) {
+func (this httpHandlers) Find(method string) (HttpHandler, bool) {
 	for _, h := range this {
 		if h.method == HttpMethodAny || h.method == method {
 			return h, true
 		}
 	}
-	return methodHandler{}, false
+	return HttpHandler{}, false
 }
 
 type routeNode struct {
 	part     string
 	children []routeNode
 
-	methodHandlers methodHandlers
+	httpHandlers httpHandlers
 }
 
 func commLen(s1, s2 string) int {
@@ -85,20 +85,20 @@ type Param struct {
 // It is therefore safe to read values by the index.
 type Params []Param
 
-func (this *routeNode) add(part string, handler methodHandler) *status.Status {
+func (this *routeNode) add(part string, handler HttpHandler) *status.Status {
 	if len(this.part) == 0 {
 		this.part = part
-		this.methodHandlers = []methodHandler{handler}
+		this.httpHandlers = []HttpHandler{handler}
 		return this.initNewNode()
 	}
 
 	commL := commLen(part, this.part)
 	part = part[commL:]
 	if len(part) == 0 {
-		if _, ok := this.methodHandlers.Find(handler.method); ok {
+		if _, ok := this.httpHandlers.Find(handler.method); ok {
 			return status.NewStatus(codes.Internal, "RouteConflict")
 		}
-		this.methodHandlers = append(this.methodHandlers, handler)
+		this.httpHandlers = append(this.httpHandlers, handler)
 		return nil
 	}
 
@@ -114,8 +114,8 @@ func (this *routeNode) add(part string, handler methodHandler) *status.Status {
 			}
 		}
 		this.children = append(this.children, routeNode{
-			part:           part,
-			methodHandlers: []methodHandler{handler},
+			part:         part,
+			httpHandlers: []HttpHandler{handler},
 		})
 		return this.children[len(this.children)-1].initNewNode()
 	}
@@ -126,8 +126,8 @@ func (this *routeNode) add(part string, handler methodHandler) *status.Status {
 	oldChild := *this
 	oldChild.part = this.part[commL:]
 	newChild := routeNode{
-		part:           part,
-		methodHandlers: methodHandlers{handler},
+		part:         part,
+		httpHandlers: httpHandlers{handler},
 	}
 	status := newChild.initNewNode()
 	if status.NotOk() {
