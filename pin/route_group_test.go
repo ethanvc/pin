@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ethanvc/pin/pin/status"
 	"github.com/stretchr/testify/assert"
+	"net/http"
 	"testing"
 )
 
@@ -12,7 +13,8 @@ func TestRouteGroup_BuildRouter(t *testing.T) {
 	var g RouteGroup
 	g.GET("/a/:b/c", emptyFunc)
 	g.GET("/a/:b/c/d", emptyFunc)
-	r, status := g.BuildRouter()
-	_ = r
-	assert.Nil(t, status)
+	r, _ := g.BuildRouter()
+	var params Params
+	h := r.Find(http.MethodGet, "/a/c/c/d", &params)
+	assert.Equal(t, "/a/:b/c/d", h.PatternPath)
 }
