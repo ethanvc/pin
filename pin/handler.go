@@ -15,6 +15,10 @@ type Handler struct {
 	methodVal  reflect.Value
 }
 
+func (this Handler) IsValid() bool {
+	return this.methodVal.IsValid()
+}
+
 func NewHandlers(v any) []Handler {
 	vv := reflect.ValueOf(v)
 	if vv.Kind() == reflect.Func {

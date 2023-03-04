@@ -35,7 +35,8 @@ func (this *Router) AddRoute(method string, patternPath string, handler any,
 }
 
 func (this *Router) Find(method, urlPath string, params *Params) HttpHandler {
-	return HttpHandler{}
+	*params = (*params)[:0]
+	return this.routeNode.Find(method, urlPath, params)
 }
 
 type HttpHandler struct {
@@ -43,6 +44,10 @@ type HttpHandler struct {
 	PatternPath     string
 	interceptorFunc []InterceptorFunc
 	handler         Handler
+}
+
+func (this HttpHandler) IsValid() bool {
+	return this.handler.IsValid()
 }
 
 type httpHandlers []HttpHandler
@@ -196,7 +201,7 @@ func (this *routeNode) Find(method, part string, params *Params) HttpHandler {
 	if this.part[0] == ':' {
 		slashIndex := strings.IndexByte(part, '/')
 		if slashIndex == -1 {
-			if h, ok := this.httpHandlers.Find(method); ok {
+			if h := this.findHandler(method); h.IsValid() {
 				*params = append(*params, Param{
 					Key:   this.part[1:],
 					Value: part,
@@ -217,6 +222,9 @@ func (this *routeNode) Find(method, part string, params *Params) HttpHandler {
 		return HttpHandler{}
 	}
 	part = part[len(this.part):]
+	if len(part) == 0 {
+		return this.findHandler(method)
+	}
 	return this.findInChildren(method, part, params)
 }
 
@@ -227,6 +235,14 @@ func (this *routeNode) findInChildren(method, part string, params *Params) HttpH
 		}
 	}
 	return HttpHandler{}
+}
+
+func (this *routeNode) findHandler(method string) HttpHandler {
+	if h, ok := this.httpHandlers.Find(method); ok {
+		return h
+	} else {
+		return HttpHandler{}
+	}
 }
 
 func (this *routeNode) wildcardNode() bool {
