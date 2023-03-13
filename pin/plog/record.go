@@ -1,7 +1,7 @@
 package plog
 
 import (
-	"github.com/ethanvc/pin/pin/attrrepo"
+	"github.com/ethanvc/pin/pin/kvrepo"
 	"time"
 )
 
@@ -10,7 +10,7 @@ type Record struct {
 	Event string
 	Level Level
 	Pc    uintptr
-	repo  attrrepo.AttrRepo
+	repo  kvrepo.KvRepo
 	l     *Logger
 }
 
@@ -34,6 +34,10 @@ func (r *Record) Str(k string, v string) *Record {
 	if r == nil {
 		return nil
 	}
+	r.repo.AddKvs(kvrepo.Kv{
+		Key:   k,
+		Value: kvrepo.StringValue(v),
+	})
 	return r
 }
 

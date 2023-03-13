@@ -1,33 +1,31 @@
-package attrrepo
+package kvrepo
 
-import "golang.org/x/exp/slog"
+const nKvsInline = 5
 
-const nAttrsInline = 5
-
-type AttrRepo struct {
+type KvRepo struct {
 	// Allocation optimization: an inline array sized to hold
 	// the majority of log calls (based on examination of open-source
-	// code). It holds the start of the list of Attrs.
-	front [nAttrsInline]slog.Attr
+	// code). It holds the start of the list of Kvs.
+	front [nKvsInline]Kv
 
-	// The number of Attrs in front.
+	// The number of Kvs in front.
 	nFront int
 
-	// The list of Attrs except for those in front.
+	// The list of Kvs except for those in front.
 	// Invariants:
 	//   - len(back) > 0 iff nFront == len(front)
 	//   - Unused array elements are zero. Used to detect mistakes.
-	back []slog.Attr
+	back []Kv
 }
 
-// NumAttrs returns the number of attributes in the Record.
-func (r AttrRepo) NumAttrs() int {
+// NumKvs returns the number of attributes in the Record.
+func (r KvRepo) NumKvs() int {
 	return r.nFront + len(r.back)
 }
 
-// Attrs calls f on each Attr in the Record.
-// The Attrs are already resolved.
-func (r AttrRepo) Attrs(f func(slog.Attr)) {
+// Kvs calls f on each Attr in the Record.
+// The Kvs are already resolved.
+func (r KvRepo) Kvs(f func(Kv)) {
 	for i := 0; i < r.nFront; i++ {
 		f(r.front[i])
 	}
@@ -36,26 +34,26 @@ func (r AttrRepo) Attrs(f func(slog.Attr)) {
 	}
 }
 
-// AddAttrs appends the given Attrs to the Record's list of Attrs.
-// It resolves the Attrs before doing so.
-func (r *AttrRepo) AddAttrs(attrs ...slog.Attr) {
-	resolveAttrs(attrs)
+// AddKvs appends the given Kvs to the Record's list of Kvs.
+// It resolves the Kvs before doing so.
+func (r *KvRepo) AddKvs(attrs ...Kv) {
+	resolveKvs(attrs)
 	n := copy(r.front[r.nFront:], attrs)
 	r.nFront += n
 	// Check if a copy was modified by slicing past the end
 	// and seeing if the Attr there is non-zero.
 	if cap(r.back) > len(r.back) {
 		end := r.back[:len(r.back)+1][len(r.back)]
-		if end != (slog.Attr{}) {
+		if end != (Kv{}) {
 			panic("copies of a slog.Record were both modified")
 		}
 	}
 	r.back = append(r.back, attrs[n:]...)
 }
 
-// resolveAttrs replaces the values of the given Attrs with their
+// resolveKvs replaces the values of the given Kvs with their
 // resolutions.
-func resolveAttrs(as []slog.Attr) {
+func resolveKvs(as []Kv) {
 	for i, a := range as {
 		as[i].Value = a.Value.Resolve()
 	}

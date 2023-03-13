@@ -1,4 +1,4 @@
-package attrrepo
+package kvrepo
 
 import (
 	"testing"

@@ -1,13 +1,13 @@
 package plog
 
 import (
-	"github.com/ethanvc/pin/pin/attrrepo"
+	"github.com/ethanvc/pin/pin/kvrepo"
 	"sync/atomic"
 	"time"
 )
 
 type Logger struct {
-	attrRepo attrrepo.AttrRepo
+	attrRepo kvrepo.KvRepo
 	handlers []Handler
 	level    Level
 }
