@@ -15,6 +15,9 @@ type Record struct {
 }
 
 func (r *Record) Done() {
+	if r == nil {
+		return
+	}
 	for _, h := range r.l.handlers {
 		h(r.l, *r)
 	}
