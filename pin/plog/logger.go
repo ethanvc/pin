@@ -3,6 +3,7 @@ package plog
 import (
 	"github.com/ethanvc/pin/pin/attrrepo"
 	"sync/atomic"
+	"time"
 )
 
 type Logger struct {
@@ -25,5 +26,22 @@ func Default() *Logger {
 }
 
 func (this *Logger) Info(event string) *Record {
-	return nil
+	return this.Log(LevelInfo, event)
+}
+
+func (this *Logger) Log(lvl Level, event string) *Record {
+	if !this.Enabled(lvl) {
+		return nil
+	}
+	r := &Record{
+		Time:  time.Now(),
+		Event: event,
+		Level: lvl,
+		l:     this,
+	}
+	return r
+}
+
+func (this *Logger) Enabled(lvl Level) bool {
+	return lvl <= this.level
 }

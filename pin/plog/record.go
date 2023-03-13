@@ -13,3 +13,30 @@ type Record struct {
 	repo  attrrepo.AttrRepo
 	l     *Logger
 }
+
+func (r *Record) Done() {
+	for _, h := range r.l.handlers {
+		h(r.l, *r)
+	}
+}
+
+func (r *Record) Int64(k string, v int64) *Record {
+	if r == nil {
+		return nil
+	}
+	return r
+}
+
+func (r *Record) Str(k string, v string) *Record {
+	if r == nil {
+		return nil
+	}
+	return r
+}
+
+func (r *Record) Any(k string, v any) *Record {
+	if r == nil {
+		return nil
+	}
+	return r
+}

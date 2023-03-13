@@ -2,6 +2,7 @@ package pin
 
 import (
 	"context"
+	"github.com/ethanvc/pin/pin/plog"
 	"github.com/ethanvc/pin/pin/status"
 	"github.com/ethanvc/pin/pin/status/codes"
 	"time"
@@ -18,10 +19,12 @@ type Request struct {
 	RespBytes        []byte
 	Method           string
 	Status           *status.Status
+	PatternPath      string
 	Handler          Handler
 	ProtocolRequest  ProtocolRequest
 	interceptorIndex int
 	Interceptors     []InterceptorFunc
+	Logger           plog.Logger
 }
 
 type requestContextKey struct{}
