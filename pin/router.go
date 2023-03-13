@@ -13,7 +13,7 @@ type Router struct {
 	routeNode routeNode
 }
 
-func (this *Router) AddRoute(method string, patternPath string, handler any,
+func (this *Router) addRoute(method string, patternPath string, handler any,
 	interceptorFunc []InterceptorFunc) *status.Status {
 	handlers := NewHandlers(handler)
 	for _, h := range handlers {
@@ -22,10 +22,10 @@ func (this *Router) AddRoute(method string, patternPath string, handler any,
 			realPath = path.Join(realPath, strcase.ToKebab(h.methodName))
 		}
 		status := this.routeNode.add(realPath, HttpHandler{
-			method:          method,
+			Method:          method,
 			PatternPath:     patternPath,
-			handler:         h,
-			interceptorFunc: interceptorFunc,
+			Handler:         h,
+			InterceptorFunc: interceptorFunc,
 		})
 		if status.NotOk() {
 			return status
@@ -40,21 +40,21 @@ func (this *Router) Find(method, urlPath string, params *Params) HttpHandler {
 }
 
 type HttpHandler struct {
-	method          string
+	Method          string
 	PatternPath     string
-	interceptorFunc []InterceptorFunc
-	handler         Handler
+	InterceptorFunc []InterceptorFunc
+	Handler         Handler
 }
 
 func (this HttpHandler) IsValid() bool {
-	return this.handler.IsValid()
+	return this.Handler.IsValid()
 }
 
 type httpHandlers []HttpHandler
 
 func (this httpHandlers) Find(method string) (HttpHandler, bool) {
 	for _, h := range this {
-		if h.method == HttpMethodAny || h.method == method {
+		if h.Method == HttpMethodAny || h.Method == method {
 			return h, true
 		}
 	}
@@ -104,7 +104,7 @@ func (this *routeNode) add(part string, handler HttpHandler) *status.Status {
 	commL := commLen(part, this.part)
 	part = part[commL:]
 	if len(part) == 0 {
-		if _, ok := this.httpHandlers.Find(handler.method); ok {
+		if _, ok := this.httpHandlers.Find(handler.Method); ok {
 			return status.NewStatus(codes.Internal, "RouteConflict")
 		}
 		this.httpHandlers = append(this.httpHandlers, handler)

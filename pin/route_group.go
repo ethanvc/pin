@@ -73,9 +73,17 @@ func (this *RouteGroup) BuildRouter() (*Router, *status.Status) {
 	return r, nil
 }
 
+func (this *RouteGroup) MustBuildRouter() *Router {
+	r, status := this.BuildRouter()
+	if status.NotOk() {
+		panic(status)
+	}
+	return r
+}
+
 func (this *RouteGroup) buildRouter(r *Router) *status.Status {
 	if len(this.method) > 0 {
-		status := r.AddRoute(this.method, this.path, this.handler, this.interceptorFunc)
+		status := r.addRoute(this.method, this.path, this.handler, this.interceptorFunc)
 		if status.NotOk() {
 			return status
 		}
