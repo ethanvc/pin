@@ -1,11 +1,18 @@
 package plog
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
+	"fmt"
 	"github.com/ethanvc/pin/pin/status"
 	"github.com/ethanvc/pin/pin/status/codes"
+	"io"
 	"net"
 	"os"
+	"strconv"
+	"sync/atomic"
+	"time"
 )
 
 type BasicLoggerContext struct {
@@ -20,18 +27,29 @@ func BasicLoggerContextFromCtx(c context.Context) BasicLoggerContext {
 }
 
 func WithBasicLoggerContext(c context.Context, lc BasicLoggerContext) context.Context {
+	if c == nil {
+		c = context.Background()
+	}
 	return context.WithValue(c, contextKeyBasicLoggerContext{}, lc)
 }
 
 // GenerateTraceId mac address/ip/timestamp/pid/global counter/random bytes
 func GenerateTraceId() string {
-	return ""
+	now := time.Now().UnixMicro()
+	seq := atomic.AddInt64(&DefaultTraceIdGeneratorInfo.LogIndex, 1)
+	var buf bytes.Buffer
+	buf.WriteString(strconv.FormatInt(now, 10))
+	buf.WriteString(strconv.FormatInt(seq, 10))
+	buf.Write(DefaultTraceIdGeneratorInfo.Hash[:])
+	return fmt.Sprintf("%x", md5.Sum(buf.Bytes()))
 }
 
 type TraceIdGeneratorInfo struct {
 	MacAddress string
 	Ip         string
 	Pid        int
+	Hash       [5]byte
+	LogIndex   int64
 }
 
 var DefaultTraceIdGeneratorInfo TraceIdGeneratorInfo
@@ -43,6 +61,12 @@ func init() {
 func initTraceIdGenerate() {
 	DefaultTraceIdGeneratorInfo.Ip, DefaultTraceIdGeneratorInfo.MacAddress = guessBestIpAndMacAddress()
 	DefaultTraceIdGeneratorInfo.Pid = os.Getpid()
+	h := md5.New()
+	io.WriteString(h, DefaultTraceIdGeneratorInfo.MacAddress)
+	io.WriteString(h, DefaultTraceIdGeneratorInfo.Ip)
+	io.WriteString(h, strconv.FormatInt(int64(DefaultTraceIdGeneratorInfo.Pid), 10))
+	copy(DefaultTraceIdGeneratorInfo.Hash[:], h.Sum(nil))
+
 }
 
 func guessBestIpAndMacAddress() (string, string) {

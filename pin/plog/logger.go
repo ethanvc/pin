@@ -18,6 +18,9 @@ func init() {
 	l := &Logger{
 		Handlers: []Handler{ConsoleHandler},
 		Level:    LevelInfo,
+		C: WithBasicLoggerContext(nil, BasicLoggerContext{
+			TraceId: GenerateTraceId(),
+		}),
 	}
 	defaultLogger.Store(l)
 }
