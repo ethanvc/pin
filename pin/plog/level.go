@@ -9,3 +9,18 @@ const (
 	LevelErr      Level = 3
 	LevelDisabled Level = 4
 )
+
+func (l Level) String() string {
+	switch l {
+	case LevelDbg:
+		return "PDBG"
+	case LevelInfo:
+		return "PINFO"
+	case LevelWarn:
+		return "PWARN"
+	case LevelErr:
+		return "PERR"
+	default:
+		return "PUnknown"
+	}
+}

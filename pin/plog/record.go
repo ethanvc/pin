@@ -18,6 +18,7 @@ func (r *Record) Done() {
 	if r == nil {
 		return
 	}
+	r.Pc = GetPc(1)
 	for _, h := range r.l.Handlers {
 		h(r.l, *r)
 	}

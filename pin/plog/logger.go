@@ -2,6 +2,8 @@ package plog
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 )
@@ -23,6 +25,9 @@ func init() {
 		}),
 	}
 	defaultLogger.Store(l)
+	exePath, _ := os.Executable()
+	exePath = filepath.Base(exePath)
+	l.Info("ProgramStart").Str("program_name", exePath).Done()
 }
 
 func Default() *Logger {
