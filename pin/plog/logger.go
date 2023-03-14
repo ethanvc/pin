@@ -1,28 +1,37 @@
 package plog
 
 import (
-	"github.com/ethanvc/pin/pin/kvrepo"
+	"context"
 	"sync/atomic"
 	"time"
 )
 
 type Logger struct {
-	attrRepo kvrepo.KvRepo
-	handlers []Handler
-	level    Level
+	Handlers []Handler
+	Level    Level
+	C        context.Context
 }
 
 var defaultLogger atomic.Pointer[Logger]
 
 func init() {
 	l := &Logger{
-		level: LevelInfo,
+		Handlers: []Handler{ConsoleHandler},
+		Level:    LevelInfo,
 	}
 	defaultLogger.Store(l)
 }
 
 func Default() *Logger {
 	return defaultLogger.Load()
+}
+
+func SetDefault(l *Logger) {
+	defaultLogger.Store(l)
+}
+
+func (this *Logger) Clone() *Logger {
+	return &*this
 }
 
 func (this *Logger) Info(event string) *Record {
@@ -43,5 +52,5 @@ func (this *Logger) Log(lvl Level, event string) *Record {
 }
 
 func (this *Logger) Enabled(lvl Level) bool {
-	return lvl <= this.level
+	return lvl <= this.Level
 }

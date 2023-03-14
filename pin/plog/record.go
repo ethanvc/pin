@@ -18,7 +18,7 @@ func (r *Record) Done() {
 	if r == nil {
 		return
 	}
-	for _, h := range r.l.handlers {
+	for _, h := range r.l.Handlers {
 		h(r.l, *r)
 	}
 }
@@ -27,6 +27,10 @@ func (r *Record) Int64(k string, v int64) *Record {
 	if r == nil {
 		return nil
 	}
+	r.repo.AddKvs(kvrepo.Kv{
+		Key:   k,
+		Value: kvrepo.Int64Value(v),
+	})
 	return r
 }
 
